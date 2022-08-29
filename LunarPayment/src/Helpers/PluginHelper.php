@@ -14,10 +14,10 @@ class PluginHelper
     public const PAYMENT_METHOD_UUID = '1a9bc76a3c244278a51a2e90c1e6f040';
 
     public const PAYMENT_METHOD_NAME = 'Lunar Payment';
-    
+
     public const PAYMENT_METHOD_DESCRIPTION = 'Lunar Payment plugin for Shopware 6';
 
     public const ACCEPTED_CARDS = ['visa', 'visaelectron', 'mastercard', 'maestro'];
 
-    public const PLUGIN_CONFIG_PATH = self::PLUGIN_NAME . '.config.';
+    public const PLUGIN_CONFIG_PATH = self::PLUGIN_NAME . '.settings.';
 }

@@ -1,0 +1,94 @@
+{% block lunar_payment %}
+<sw-page class="lunar-payment">
+
+    {% block lunar_payment_header %}
+    <template #smart-bar-header>
+        <h2>
+            {{ $tc('sw-settings.index.title') }}
+            <sw-icon name="small-arrow-medium-right" small></sw-icon>
+            {{ $tc('lunarpayment.title') }}
+        </h2>
+    </template>
+    {% endblock %}
+
+    {% block lunar_payment_actions %}
+    <template #smart-bar-actions>
+        {% block lunar_payment_settings_actions_save %}
+        <sw-button-process
+                class="sw-settings-login-registration__save-action"
+                :isLoading="isLoading"
+                :processSuccess="isSaveSuccessful"
+                :disabled="isLoading"
+                variant="primary"
+                @process-finish="saveFinish"
+                @click="onSave">
+            {{ $tc('lunarpayment.settings.save') }}
+        </sw-button-process>
+        {% endblock %}
+    </template>
+    {% endblock %}
+
+    {% set configPath = 'LunarPayment.settings' %}
+
+    {% block lunar_payment_settings_content %}
+    <template #content>
+        <sw-card-view>
+            <sw-system-config
+                class="lunar-config__wrapper"
+                ref="systemConfig"
+                salesChannelSwitchable
+                inherit
+                @config-changed="onConfigChange"
+                domain="{{ configPath }}">
+
+                <template #card-element="{element, config, card}">
+                    <div>
+
+                        <sw-form-field-renderer
+                            v-if="!element.name.includes('transactionMode') || !element.name.includes('supportedCards') || !element.name.includes('captureMode')"
+                            v-bind="getElementBind(getBind(element, config))"
+                            v-model="config[element.name]"
+                        />
+
+                        <sw-form-field-renderer
+                            v-else-if="element.name.startsWith('{{ configPath }}.transactionMode')"
+                            :config="{
+                                componentName: 'sw-single-select',
+                                label: getInlineSnippet(getElementBind(getBind(element, config)).config.label),
+                                helpText: getInlineSnippet(getElementBind(getBind(element, config)).config.helpText),
+                                options: transactionMode,
+                            }"
+                            v-model="config[element.name]"
+                        />
+
+                        <sw-form-field-renderer
+                            v-else-if="element.name.startsWith('{{ configPath }}.captureMode')"
+                            :config="{
+                                componentName: 'sw-single-select',
+                                label: getInlineSnippet(getElementBind(getBind(element, config)).config.label),
+                                helpText: getInlineSnippet(getElementBind(getBind(element, config)).config.helpText),
+                                options: captureMode,
+                            }"
+                            v-model="config[element.name]"
+                        />
+
+                        <sw-form-field-renderer
+                            v-else-if="element.name.startsWith('{{ configPath }}.supportedCards')"
+                            :config="{
+                                componentName: 'sw-multi-select',
+                                label: getInlineSnippet(getElementBind(getBind(element, config)).config.label),
+                                helpText: getInlineSnippet(getElementBind(getBind(element, config)).config.helpText),
+                                options: acceptedCards,
+                            }"
+                            v-model="config[element.name]"
+                        />
+
+                    </div>
+                </template>
+            </sw-system-config>
+        </sw-card-view>
+    </template>
+    {% endblock %}
+
+</sw-page>
+{% endblock %}

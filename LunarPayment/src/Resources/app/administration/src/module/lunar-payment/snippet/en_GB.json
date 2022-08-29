@@ -1,0 +1,75 @@
+{
+    "lunar-payment": {
+        "title": "Lunar Payment",
+        "general": {
+            "mainMenuItemGeneral": "Lunar Payment",
+            "descriptionTextModule": "Settings for Lunar Payment"
+        },
+        "capture": {
+            "buttonTitle": "Capture",
+            "successTitle": "Lunar Payment",
+            "successMessage": "Capture was successfull.",
+            "errorTitle": "Lunar Payment",
+            "errorMessage": "Capture action failed.",
+            "tooltips": {
+                "impossible": "Capture not possible"
+            }
+        },
+        "refund": {
+            "buttonTitle": "Refund",
+            "successTitle": "Lunar Payment",
+            "successMessage": "Refund was successfull.",
+            "errorTitle": "Lunar Payment",
+            "errorMessage": "Refund action failed.",
+            "tooltips": {
+                "impossible": "Refund not possible"
+            }
+        },
+        "modal": {
+            "capture": {
+                "title": "Capture",
+                "submit": "Capture",
+                "fullSubmit": "Full capture",
+                "amount": "Capture amount",
+                "captured": "Captured amount"
+            },
+            "refund": {
+                "title": "Refund",
+                "submit": "Refund",
+                "fullSubmit": "Full Refund",
+                "amount": "Refund amount",
+                "refunded": "Refunded amount"
+            },
+            "orderAmount": "Order amount",
+            "remainingAmount": "Remaining amount",
+            "shippingCosts": "Shipping costs",
+            "descriptionHelpText": "Description help text",
+            "close": "Close",
+            "labelComment": "Label comment",
+            "columns": {
+                "reference": "Reference",
+                "product": "Product",
+                "quantity": "Quantity",
+                "price": "Price"
+            }
+        },
+        "settingsForm": {
+            "save": "Save",
+            "titleSuccess": "Success",
+            "titleError": "Error",
+            "liveAppKeyInvalid": "The APP/PRIVATE key is invalid",
+            "livePublicKeyInvalid": "The PUBLIC key is invalid",
+            "testAppKeyInvalid": "The Test App/Private key is invalid",
+            "testPublicKeyInvalid": "The Test Public key is invalid"
+        },
+        "messageNotBlank": "This field must not be empty.",
+        "transactionId": "transaction ID",
+        "orderTransactionState": "Order transaction state",
+        "error": {
+            "transaction": {
+                "notFound": "No matching transaction could be found",
+                "orderNotFound": "No matching order could be found"
+            }
+        }
+    }
+}
