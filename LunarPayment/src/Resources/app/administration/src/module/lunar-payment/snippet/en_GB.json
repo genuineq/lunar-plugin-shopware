@@ -7,9 +7,7 @@
         },
         "capture": {
             "buttonTitle": "Capture",
-            "successTitle": "Lunar Payment",
-            "successMessage": "Capture was successfull.",
-            "errorTitle": "Lunar Payment",
+            "successMessage": "Capture was successful.",
             "errorMessage": "Capture action failed.",
             "tooltips": {
                 "impossible": "Capture not possible"
@@ -17,12 +15,18 @@
         },
         "refund": {
             "buttonTitle": "Refund",
-            "successTitle": "Lunar Payment",
-            "successMessage": "Refund was successfull.",
-            "errorTitle": "Lunar Payment",
+            "successMessage": "Refund was successful.",
             "errorMessage": "Refund action failed.",
             "tooltips": {
                 "impossible": "Refund not possible"
+            }
+        },
+        "void": {
+            "buttonTitle": "Void",
+            "successMessage": "Void was successful.",
+            "errorMessage": "Void action failed.",
+            "tooltips": {
+                "impossible": "Void not possible"
             }
         },
         "modal": {
@@ -53,14 +57,14 @@
                 "price": "Price"
             }
         },
-        "settingsForm": {
+        "settings": {
             "save": "Save",
             "titleSuccess": "Success",
             "titleError": "Error",
             "liveAppKeyInvalid": "The APP/PRIVATE key is invalid",
             "livePublicKeyInvalid": "The PUBLIC key is invalid",
-            "testAppKeyInvalid": "The Test App/Private key is invalid",
-            "testPublicKeyInvalid": "The Test Public key is invalid"
+            "testAppKeyInvalid": "The TEST App/Private key is invalid",
+            "testPublicKeyInvalid": "The TEST Public key is invalid"
         },
         "messageNotBlank": "This field must not be empty.",
         "transactionId": "transaction ID",

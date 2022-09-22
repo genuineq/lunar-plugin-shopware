@@ -46,16 +46,24 @@ class SettingsController extends AbstractController
         $pluginName = PluginHelper::PLUGIN_NAME;
         $configPath = PluginHelper::PLUGIN_CONFIG_PATH;
 
-        $testAppKeyName = $configPath . 'testModeAppKey';
-        $testPublicKeyName = $configPath . 'testModePublicKey';
-        $liveAppKeyName = $configPath . 'liveModeAppKey';
-        $livePublicKeyName = $configPath . 'liveModePublicKey';
+        // $testAppKeyName = $configPath . 'testModeAppKey';
+        // $testPublicKeyName = $configPath . 'testModePublicKey';
+        // $liveAppKeyName = $configPath . 'liveModeAppKey';
+        // $livePublicKeyName = $configPath . 'liveModePublicKey';
 
-        if ($pluginName !== $request->key) { // replace key with proper params extraction from request
-            return; // @TODO return json
-        }
+        $testAppKeyName = 'testModeAppKey';
+        $testPublicKeyName = 'testModePublicKey';
+        $liveAppKeyName = 'liveModeAppKey';
+        $livePublicKeyName = 'liveModePublicKey';
 
-        $apiClient = new ApiClient($testAppKeyValue);
+        $settingsKeys = json_decode($request->getContent())->keys;
+
+        // $appKeyValue = $settingsKeys->{$liveAppKeyName};
+        // if ('test' == $settingsKeys->transactionMode) {
+            $appKeyValue = $settingsKeys->{$testAppKeyName};
+        // }
+
+        $apiClient = new ApiClient($appKeyValue);
 
         try {
             $identity = $apiClient->apps()->fetch();
@@ -70,7 +78,7 @@ class SettingsController extends AbstractController
                 'status'  => false,
                 'message' => $message,
                 'code'    => 0,
-                'errors'=> $errors,
+                'errors'=> $errors ?? [],
             ], 400);
         }
 

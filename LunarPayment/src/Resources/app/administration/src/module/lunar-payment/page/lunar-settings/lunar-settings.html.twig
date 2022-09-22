@@ -6,7 +6,7 @@
         <h2>
             {{ $tc('sw-settings.index.title') }}
             <sw-icon name="small-arrow-medium-right" small></sw-icon>
-            {{ $tc('lunarpayment.title') }}
+            {{ $tc('lunar-payment.title') }}
         </h2>
     </template>
     {% endblock %}
@@ -22,13 +22,11 @@
                 variant="primary"
                 @process-finish="saveFinish"
                 @click="onSave">
-            {{ $tc('lunarpayment.settings.save') }}
+            {{ $tc('lunar-payment.settings.save') }}
         </sw-button-process>
         {% endblock %}
     </template>
     {% endblock %}
-
-    {% set configPath = 'LunarPayment.settings' %}
 
     {% block lunar_payment_settings_content %}
     <template #content>
@@ -39,7 +37,7 @@
                 salesChannelSwitchable
                 inherit
                 @config-changed="onConfigChange"
-                domain="{{ configPath }}">
+                domain="LunarPayment.settings">
 
                 <template #card-element="{element, config, card}">
                     <div>
@@ -51,7 +49,7 @@
                         />
 
                         <sw-form-field-renderer
-                            v-else-if="element.name.startsWith('{{ configPath }}.transactionMode')"
+                            v-else-if="element.name.includes('transactionMode')"
                             :config="{
                                 componentName: 'sw-single-select',
                                 label: getInlineSnippet(getElementBind(getBind(element, config)).config.label),
@@ -62,7 +60,7 @@
                         />
 
                         <sw-form-field-renderer
-                            v-else-if="element.name.startsWith('{{ configPath }}.captureMode')"
+                            v-else-if="element.name.includes('captureMode')"
                             :config="{
                                 componentName: 'sw-single-select',
                                 label: getInlineSnippet(getElementBind(getBind(element, config)).config.label),
@@ -73,7 +71,7 @@
                         />
 
                         <sw-form-field-renderer
-                            v-else-if="element.name.startsWith('{{ configPath }}.supportedCards')"
+                            v-else-if="element.name.includes('supportedCards')"
                             :config="{
                                 componentName: 'sw-multi-select',
                                 label: getInlineSnippet(getElementBind(getBind(element, config)).config.label),

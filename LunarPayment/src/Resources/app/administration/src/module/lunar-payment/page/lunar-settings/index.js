@@ -196,13 +196,13 @@ Component.register('lunar-settings', {
                 if (element.name === `${this.configPath}${this.testAppConfigKey}` && !this.testAppKeyFilled) {
                     element.config.error = {
                         code: 1,
-                        detail: 'The App Key must not be empty'
+                        detail: 'The TEST App Key must not be empty'
                     };
                 }
                 if (element.name === `${this.configPath}${this.testPublicConfigKey}` && !this.testPublicKeyFilled) {
                     element.config.error = {
                         code: 1,
-                        detail: 'The Public Key must not be empty'
+                        detail: 'The TEST Public Key must not be empty'
                     };
                 }
             }
