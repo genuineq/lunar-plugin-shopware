@@ -1,23 +1,20 @@
 /**
  * component
  */
-import './component/lunar-payment-plugin-icon';
+ import './component/lunar-payment-plugin-icon';
 
-/**
- * extension
- */
-import './extension/sw-settings-index';
+ /**
+  * extension
+  */
+ import './extension/sw-settings-index';
 
-/**
- * page
- */
-import './page/lunar-settings';
+ /**
+  * page
+  */
+ import './page/lunar-settings';
 
 
-/**
- * REGISTER
- */
-Shopware.Module.register('lunar-payment', {
+let moduleConfig = {
     type: 'plugin',
     name: 'LunarPayment',
     title: 'Lunar Payment',
@@ -40,6 +37,12 @@ Shopware.Module.register('lunar-payment', {
         group: 'plugins',
         to: 'lunar.payment.index',
         iconComponent: 'lunar-payment-plugin-icon',
-        backgroundEnabled: true,
+        backgroundEnabled: false,
     },
-});
+
+ }
+
+ /**
+  * REGISTER
+  */
+ Shopware.Module.register('lunar-payment', moduleConfig);
