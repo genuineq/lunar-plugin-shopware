@@ -81,6 +81,7 @@ Component.register('lunar-settings', {
             this.config = config;
             this.checkCredentialsFilled();
             this.showValidationErrors = false;
+            this.showApiErrors = false;
         },
 
         /**
@@ -178,12 +179,17 @@ Component.register('lunar-settings', {
                     this.isLoading = false;
 
             }).catch((errorResponse) => {
-                this.createNotificationError({
-                    title: titleError,
-                    message: errorResponse.response.data.message,
+                let apiResponseErrors = errorResponse.response.data.errors;
+
+                Object.entries(apiResponseErrors).forEach(([key, errorMessage]) => {
+                    this.createNotificationError({
+                        title: titleError,
+                        message: errorMessage,
+                    })
                 });
+
                 this.showApiErrors = true;
-                this.apiResponseErrors = errorResponse.response.data.errors;
+                this.apiResponseErrors = apiResponseErrors;
                 this.isLoading = false;
                 this.isSaveSuccessful = false;
             });
@@ -193,8 +199,6 @@ Component.register('lunar-settings', {
          *
          */
         getBind(element, config) {
-            // let originalElement;
-
             let errorFieldNotBlank = {
                 code: 1,
                 detail: this.$tc('lunar-payment.messageNotBlank'),
@@ -231,40 +235,29 @@ Component.register('lunar-settings', {
                     element.name === `${this.configPath}${this.liveAppConfigKey}`
                     && this.apiResponseErrors.hasOwnProperty(this.liveAppConfigKey)
                 ) {
-                    element.config.error = this.$tc('lunar-payment.settings.liveAppKeyInvalid');
+                    element.config.error = {code: 1, detail: this.$tc('lunar-payment.settings.liveAppKeyInvalid')};
                 }
                 if (
                     element.name === `${this.configPath}${this.livePublicConfigKey}`
                     && this.apiResponseErrors.hasOwnProperty(this.livePublicConfigKey)
                 ) {
-                    element.config.error = this.$tc('lunar-payment.settings.livePublicKeyInvalid');
+                    element.config.error = {code: 1, detail: this.$tc('lunar-payment.settings.livePublicKeyInvalid')};
                 }
                 if (
                     element.name === `${this.configPath}${this.testAppConfigKey}`
                     && this.apiResponseErrors.hasOwnProperty(this.testAppConfigKey)
                 ) {
-                    element.config.error = this.$tc('lunar-payment.settings.testAppKeyInvalid');
+                    element.config.error = {code: 1, detail: this.$tc('lunar-payment.settings.testAppKeyInvalid')};
                 }
                 if (
                     element.name === `${this.configPath}${this.testPublicConfigKey}`
                     && this.apiResponseErrors.hasOwnProperty(this.testPublicConfigKey)
                 ) {
-                    element.config.error = this.$tc('lunar-payment.settings.testPublicKeyInvalid');
+                    element.config.error = {code: 1, detail: this.$tc('lunar-payment.settings.testPublicKeyInvalid')};
                 }
             }
 
             return element;
-
-            // this.$refs.systemConfig.config.forEach((configElement) => {
-            //     configElement.elements.forEach((child) => {
-            //         if (child.name === element.name) {
-            //             originalElement = child;
-            //             return;
-            //         }
-            //     });
-            // });
-
-            // return originalElement || element;
         },
 
         /**

@@ -10,7 +10,6 @@ use Shopware\Core\Framework\Routing\Annotation\RouteScope;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
 use LunarPayment\lib\ApiClient;
-use LunarPayment\Helpers\PluginHelper;
 use LunarPayment\Helpers\ValidationHelper;
 use LunarPayment\lib\Exception\ApiException;
 
@@ -19,11 +18,9 @@ use LunarPayment\lib\Exception\ApiException;
  */
 class SettingsController extends AbstractController
 {
-    /** @var ApiClient */
-    private $apiClient;
-
     private array $errors = [];
-    private string $transactionMode = '';
+    private array $livePublicKeys = [];
+    private array $testPublicKeys = [];
 
     /**
      * @RouteScope(scopes={"api"})
@@ -31,80 +28,27 @@ class SettingsController extends AbstractController
      */
     public function validateApiKeys(Request $request, Context $context): JsonResponse
     {
-
-        /**
-         * @TODO move/build code in specific methods
-         */
-
-        $dataSaveAllowed = false;
-
-        $pluginName = PluginHelper::PLUGIN_NAME;
-        $configPath = PluginHelper::PLUGIN_CONFIG_PATH;
-
-        // $testAppKeyName = $configPath . 'testModeAppKey';
-        // $testPublicKeyName = $configPath . 'testModePublicKey';
-        // $liveAppKeyName = $configPath . 'liveModeAppKey';
-        // $livePublicKeyName = $configPath . 'liveModePublicKey';
-
-        $transactionModeKeyName = 'transactionMode';
-
-        $testAppKeyName = 'testModeAppKey';
-        $testPublicKeyName = 'testModePublicKey';
         $liveAppKeyName = 'liveModeAppKey';
         $livePublicKeyName = 'liveModePublicKey';
+        $testAppKeyName = 'testModeAppKey';
+        $testPublicKeyName = 'testModePublicKey';
 
         $settingsKeys = json_decode($request->getContent())->keys;
-        $this->transactionMode = ('test' == $settingsKeys->{$transactionModeKeyName}) ? ('test') : ('live');
 
-        if ('live' == $this->transactionMode) {
-            $appKeyValue = $settingsKeys->{$liveAppKeyName} ?? '';
-        }
-        if ('test' == $this->transactionMode) {
-            $appKeyValue = $settingsKeys->{$testAppKeyName} ?? '';
-        }
+        $this->validateLiveAppKey($settingsKeys->{$liveAppKeyName} ?? '');
+        $this->validateLivePublicKey($settingsKeys->{$livePublicKeyName} ?? '');
+        $this->validateTestAppKey($settingsKeys->{$testAppKeyName} ?? '');
+        $this->validateTestPublicKey($settingsKeys->{$testPublicKeyName} ?? '');
 
-        $this->apiClient = new ApiClient($appKeyValue);
-
-
-        try {
-            $identity = $this->apiClient->apps()->fetch();
-
-        } catch (ApiException $exception) {
-
-            $message = "The app key doesn't seem to be valid.";
-            $message = ValidationHelper::handleExceptions($exception, $message);
-
-            $this->errors["{$this->transactionMode}ModeAppKey"] = $message;
-
+        if (!empty($this->errors)) {
             return new JsonResponse([
                 'status'  => empty($this->errors),
-                'message' => $message,
+                'message' => 'Error',
                 'code'    => 0,
                 'errors'=> $this->errors,
             ], 400);
         }
 
-        try {
-            $merchants = $this->apiClient->merchants()->find($identity['id']);
-            if ($merchants) {
-                foreach ($merchants as $merchant) {
-                    if ($merchant['test']) {
-                        $validationKeys[] = $merchant['key'];
-                    }
-                }
-            }
-        } catch (ApiException $exception) {
-            // handle this bellow
-        }
-
-        if (empty($validationKeys)) {
-            return new JsonResponse([
-                'status'  =>  empty($this->errors),
-                'message' => 'The test private key is not valid or set to live mode.',
-                'code'    => 0,
-                'errors'  => $this->errors,
-            ], 400);
-        }
 
         return new JsonResponse([
             'status'  =>  empty($this->errors),
@@ -114,51 +58,107 @@ class SettingsController extends AbstractController
         ], 200); // need to adapt this response
     }
 
-    /**
-     *
-     */
-    public function validateAppKey($testAppKeyValue)
-    {
 
+    /**
+     * LIVE KEYS VALIDATION
+     */
+    private function validateLiveAppKey($liveAppKeyValue)
+    {
+        if ($liveAppKeyValue) {
+
+            $apiClient = new ApiClient($liveAppKeyValue);
+
+            try {
+                $identity = $apiClient->apps()->fetch();
+
+            } catch (ApiException $exception) {
+                $message = "The app key doesn't seem to be valid. <br>";
+                $message = ValidationHelper::handleExceptions($exception, $message);
+
+                $this->errors['liveModeAppKey'] = $message;
+            }
+
+            try {
+                $merchants = $apiClient->merchants()->find($identity['id'] ?? '');
+                if ($merchants) {
+                    foreach ($merchants as $merchant) {
+                        if ( ! $merchant['test']) {
+                            $this->livePublicKeys[] = $merchant['key'];
+                        }
+                    }
+                }
+            } catch (ApiException $exception) {
+                // handle this bellow
+            }
+
+            if (empty($this->livePublicKeys)) {
+                $this->errors['liveModeAppKey'] = 'The private key is not valid or set to test mode.';
+            }
+        }
     }
 
     /**
      *
      */
-    public function validatePublicKey($testPublicKeyValue)
+    private function validateLivePublicKey($livePublicKeyValue)
     {
-
+        if ($livePublicKeyValue && !empty($this->livePublicKeys)) {
+            /** Check if the public key exists among the saved ones. */
+            if (!in_array($livePublicKeyValue, $this->livePublicKeys)) {
+                $this->errors['liveModePublicKey'] = 'The public key doesn\'t seem to be valid.';
+            }
+        }
     }
 
-    // /**
-    //  *
-    //  */
-    // public function validateTestAppKey($testAppKeyValue)
-    // {
+    /**
+     * TEST KEYS VALIDATION
+     */
+    private function validateTestAppKey($testAppKeyValue)
+    {
+        if ($testAppKeyValue) {
 
-    // }
+            $apiClient = new ApiClient($testAppKeyValue);
 
-    // /**
-    //  *
-    //  */
-    // public function validateTestPublicKey($testPublicKeyValue)
-    // {
+            try {
+                $identity = $apiClient->apps()->fetch();
 
-    // }
+            } catch (ApiException $exception) {
+                $message = "The test app key doesn't seem to be valid. <br>";
+                $message = ValidationHelper::handleExceptions($exception, $message);
 
-    // /**
-    //  *
-    //  */
-    // public function validateLiveAppKey($liveAppKeyValue)
-    // {
+                $this->errors['testModeAppKey'] = $message;
+            }
 
-    // }
 
-    // /**
-    //  *
-    //  */
-    // public function validateLivePublicKey($livePublicKeyValue)
-    // {
+            try {
+                $merchants = $apiClient->merchants()->find($identity['id'] ?? '');
+                if ($merchants) {
+                    foreach ($merchants as $merchant) {
+                        if ($merchant['test']) {
+                            $this->testPublicKeys[] = $merchant['key'];
+                        }
+                    }
+                }
+            } catch (ApiException $exception) {
+                // handle this bellow
+            }
 
-    // }
+            if (empty($this->testPublicKeys)) {
+                $this->errors['testModeAppKey'] = 'The test private key is not valid or set to live mode.';
+            }
+        }
+    }
+
+    /**
+     *
+     */
+    private function validateTestPublicKey($testPublicKeyValue)
+    {
+        if ($testPublicKeyValue && !empty($this->testPublicKeys)) {
+            /** Check if the public key exists among the saved ones. */
+            if (!in_array($testPublicKeyValue, $this->testPublicKeys)) {
+                $this->errors['testModePublicKey'] = 'The test public key doesn\'t seem to be valid.';
+            }
+        }
+    }
 }
