@@ -26,6 +26,8 @@ Component.register('lunar-settings', {
             isTestSuccessful: false,
             config: {},
             configPath: 'LunarPayment.settings.',
+            transactionModeConfigKey: 'transactionMode',
+            transactionMode: '',
             liveAppConfigKey: 'liveModeAppKey',
             livePublicConfigKey: 'liveModePublicKey',
             testAppConfigKey: 'testModeAppKey',
@@ -35,22 +37,26 @@ Component.register('lunar-settings', {
             testAppKeyFilled: false,
             testPublicKeyFilled: false,
             showValidationErrors: false,
-            transactionMode: [],
-            captureMode: [],
-            acceptedCards: [],
+            showApiErrors: false,
+            apiResponseErrors: {},
+            // transactionModeSelect: [],
+            // captureMode: [],
+            // acceptedCards: [],
         };
     },
 
     created() {
-        this.generateFieldsOptions();
+        // this.generateFieldOptions();
     },
 
     computed: {
         credentialsMissing: function() {
-            return !this.testAppKeyFilled
-            || !this.testPublicKeyFilled
-            // || !this.liveAppKeyFilled
-            // || !this.livePublicKeyFilled;
+            switch (this.transactionMode) {
+                case 'live':
+                    return !this.liveAppKeyFilled || !this.livePublicKeyFilled;
+                case 'test':
+                    return !this.testAppKeyFilled || !this.testPublicKeyFilled
+            }
         }
     },
 
@@ -61,23 +67,35 @@ Component.register('lunar-settings', {
     },
 
     methods: {
+        /**
+         *
+         */
         saveFinish() {
             this.isSaveSuccessful = false;
         },
 
+        /**
+         *
+         */
         onConfigChange(config) {
             this.config = config;
             this.checkCredentialsFilled();
             this.showValidationErrors = false;
         },
 
+        /**
+         *
+         */
         checkCredentialsFilled() {
-            // this.liveAppKeyFilled = !!this.getConfigValue(this.liveAppConfigKey);
-            // this.livePublicKeyFilled = !!this.getConfigValue(this.livePublicConfigKey);
+            this.liveAppKeyFilled = !!this.getConfigValue(this.liveAppConfigKey);
+            this.livePublicKeyFilled = !!this.getConfigValue(this.livePublicConfigKey);
             this.testAppKeyFilled = !!this.getConfigValue(this.testAppConfigKey);
             this.testPublicKeyFilled = !!this.getConfigValue(this.testPublicConfigKey);
         },
 
+        /**
+         *
+         */
         getConfigValue(field) {
             const defaultConfig = this.$refs.systemConfig.actualConfigData.null;
             const salesChannelId = this.$refs.systemConfig.currentSalesChannelId;
@@ -85,13 +103,38 @@ Component.register('lunar-settings', {
             if (salesChannelId === null) {
                 return this.config[`${this.configPath}${field}`];
             }
-            return this.config[`${this.configPath}${field}`]
-                    || defaultConfig[`${this.configPath}${field}`];
+            return this.config[`${this.configPath}${field}`] || defaultConfig[`${this.configPath}${field}`];
         },
 
+        /**
+         *
+         */
         onSave() {
+            this.transactionMode = this.getConfigValue(this.transactionModeConfigKey);
+            const titleError = this.$tc('lunar-payment.settings.titleError');
+
             if (this.credentialsMissing) {
                 this.showValidationErrors = true;
+                let message = '';
+
+                switch (this.transactionMode) {
+                    case "live":
+                        !this.liveAppKeyFilled && (message += this.$tc('lunar-payment.settings.liveAppKeyInvalid') + "<br>");
+                        !this.livePublicKeyFilled && (message += this.$tc('lunar-payment.settings.livePublicKeyInvalid') + "<br>");
+                        break;
+                    case "test":
+                        !this.testAppKeyFilled && (message += this.$tc('lunar-payment.settings.testAppKeyInvalid') + "<br>");
+                        !this.testPublicKeyFilled && (message += this.$tc('lunar-payment.settings.testPublicKeyInvalid') + "<br>");
+                }
+
+                this.createNotificationError({
+                    title: titleError,
+                    message: message,
+                });
+
+                this.isLoading = false;
+                this.isSaveSuccessful = false;
+
                 return;
             }
 
@@ -99,126 +142,134 @@ Component.register('lunar-settings', {
             this.isLoading = true;
 
             let credentials = {
-                // liveModeAppKey: this.getConfigValue(this.liveAppConfigKey),
-                // liveModePublicKey: this.getConfigValue(this.livePublicConfigKey),
+                transactionMode: this.getConfigValue(this.transactionModeConfigKey),
+                liveModeAppKey: this.getConfigValue(this.liveAppConfigKey),
+                liveModePublicKey: this.getConfigValue(this.livePublicConfigKey),
                 testModeAppKey: this.getConfigValue(this.testAppConfigKey),
                 testModePublicKey: this.getConfigValue(this.testPublicConfigKey),
             }
 
-            /** Validate API keys */
-            this.LunarPaymentSettingsService.validateApiKeys(credentials).then((response) => {
-                const credentialsValid = response.credentialsValid;
-                const errors = response.errors;
+            /**
+             * Validate API keys
+             */
+            this.LunarPaymentSettingsService.validateApiKeys(credentials)
+                .then((response) => {
 
-                if (credentialsValid) {
-                    this.createNotificationSuccess({
-                        title: 'success title',
-                        message: 'valid success message',
-                    });
-
-                    /** Save configuration. */
+                    /**
+                     * Save configuration.
+                     */
                     this.$refs.systemConfig.saveAll().then(() => {
+                        this.createNotificationSuccess({
+                            title: this.$tc('lunar-payment.settings.titleSuccess'),
+                            message: this.$tc('lunar-payment.settings.generalSuccess'),
+                        });
+
                         this.isLoading = false;
                         this.isSaveSuccessful = true;
                     }).catch((errorResponse) => {
                         this.createNotificationError({
-                            title: 'config save error title',
-                            message: 'config save error general message',
+                            title: titleError,
+                            message: this.$tc('lunar-payment.settings.generalSaveError'),
                         });
                         this.isLoading = false;
                         this.isSaveSuccessful = false;
                     });
 
-                } else {
-                    for(let key in errors) {
-                        if(errors.hasOwnProperty(key)) {
-                            this.createNotificationError({
-                                title: 'error title',
-                                message: 'error validation message',
-                            });
-                        }
-                    }
-                }
-                this.isLoading = false;
+                    this.isLoading = false;
 
             }).catch((errorResponse) => {
                 this.createNotificationError({
-                    title: 'general error title',
-                    message: 'error general message',
+                    title: titleError,
+                    message: errorResponse.response.data.message,
                 });
+                this.showApiErrors = true;
+                this.apiResponseErrors = errorResponse.response.data.errors;
                 this.isLoading = false;
                 this.isSaveSuccessful = false;
             });
         },
 
-        generateFieldsOptions() {
-            this.transactionMode.push(
-                {'label':'Live', 'value':'live',},
-                {'label':'Test', 'value':'test',},
-            );
-
-            this.captureMode.push(
-                {'label':'Delayed', 'value':'delayed',},
-                {'label':'Instant', 'value':'instant',},
-            );
-
-            this.acceptedCards.push(
-                {'label':'Visa',         'value':'visa',},
-                {'label':'Visaelectron', 'value':'visaelectron',},
-                {'label':'Mastercard',   'value':'mastercard',},
-                {'label':'Maestro',      'value':'maestro',},
-            );
-        },
-
+        /**
+         *
+         */
         getBind(element, config) {
-            let originalElement;
+            // let originalElement;
+
+            let errorFieldNotBlank = {
+                code: 1,
+                detail: this.$tc('lunar-payment.messageNotBlank'),
+            };
 
             if (config !== this.config) {
                 this.config = config;
             }
 
-            // if (this.showValidationErrors) {
-            //     if (element.name === `${this.configPath}${this.liveAppConfigKey}` && !this.liveAppKeyFilled) {
-            //         element.config.error = {
-            //             code: 1,
-            //             detail: 'The App Key must not be empty'
-            //         };
-            //     }
-            //     if (element.name === `${this.configPath}${this.livePublicConfigKey}` && !this.livePublicKeyFilled) {
-            //         element.config.error = {
-            //             code: 1,
-            //             detail: 'The Public Key must not be empty'
-            //         };
-            //     }
-            // }
-
             if (this.showValidationErrors) {
-                if (element.name === `${this.configPath}${this.testAppConfigKey}` && !this.testAppKeyFilled) {
-                    element.config.error = {
-                        code: 1,
-                        detail: 'The TEST App Key must not be empty'
-                    };
-                }
-                if (element.name === `${this.configPath}${this.testPublicConfigKey}` && !this.testPublicKeyFilled) {
-                    element.config.error = {
-                        code: 1,
-                        detail: 'The TEST Public Key must not be empty'
-                    };
+
+                switch (this.transactionMode) {
+                    case 'live':
+                        if (element.name === `${this.configPath}${this.liveAppConfigKey}` && !this.liveAppKeyFilled) {
+                            element.config.error = errorFieldNotBlank;
+                        }
+                        if (element.name === `${this.configPath}${this.livePublicConfigKey}` && !this.livePublicKeyFilled) {
+                            element.config.error = errorFieldNotBlank;
+                        }
+                        break;
+
+                    case 'test':
+                        if (element.name === `${this.configPath}${this.testAppConfigKey}` && !this.testAppKeyFilled) {
+                            element.config.error = errorFieldNotBlank;
+                        }
+                        if (element.name === `${this.configPath}${this.testPublicConfigKey}` && !this.testPublicKeyFilled) {
+                            element.config.error = errorFieldNotBlank;
+                        }
                 }
             }
 
-            this.$refs.systemConfig.config.forEach((configElement) => {
-                configElement.elements.forEach((child) => {
-                    if (child.name === element.name) {
-                        originalElement = child;
-                        return;
-                    }
-                });
-            });
+            if (this.showApiErrors) {
+                if (
+                    element.name === `${this.configPath}${this.liveAppConfigKey}`
+                    && this.apiResponseErrors.hasOwnProperty(this.liveAppConfigKey)
+                ) {
+                    element.config.error = this.$tc('lunar-payment.settings.liveAppKeyInvalid');
+                }
+                if (
+                    element.name === `${this.configPath}${this.livePublicConfigKey}`
+                    && this.apiResponseErrors.hasOwnProperty(this.livePublicConfigKey)
+                ) {
+                    element.config.error = this.$tc('lunar-payment.settings.livePublicKeyInvalid');
+                }
+                if (
+                    element.name === `${this.configPath}${this.testAppConfigKey}`
+                    && this.apiResponseErrors.hasOwnProperty(this.testAppConfigKey)
+                ) {
+                    element.config.error = this.$tc('lunar-payment.settings.testAppKeyInvalid');
+                }
+                if (
+                    element.name === `${this.configPath}${this.testPublicConfigKey}`
+                    && this.apiResponseErrors.hasOwnProperty(this.testPublicConfigKey)
+                ) {
+                    element.config.error = this.$tc('lunar-payment.settings.testPublicKeyInvalid');
+                }
+            }
 
-            return originalElement || element;
+            return element;
+
+            // this.$refs.systemConfig.config.forEach((configElement) => {
+            //     configElement.elements.forEach((child) => {
+            //         if (child.name === element.name) {
+            //             originalElement = child;
+            //             return;
+            //         }
+            //     });
+            // });
+
+            // return originalElement || element;
         },
 
+        /**
+         *
+         */
         getElementBind(element) {
             const bind = object.deepCopyObject(element);
 
@@ -229,5 +280,27 @@ Component.register('lunar-settings', {
 
             return bind;
         },
-    }
+    },
+
+    /**
+     *
+     */
+    // generateFieldOptions() {
+    //     this.transactionModeSelect.push(
+    //         {'label':'Live', 'value':'live',},
+    //         {'label':'Test', 'value':'test',},
+    //     );
+
+    //     this.captureMode.push(
+    //         {'label':'Delayed', 'value':'delayed',},
+    //         {'label':'Instant', 'value':'instant',},
+    //     );
+
+    //     this.acceptedCards.push(
+    //         {'label':'Visa',         'value':'visa',},
+    //         {'label':'Visaelectron', 'value':'visaelectron',},
+    //         {'label':'Mastercard',   'value':'mastercard',},
+    //         {'label':'Maestro',      'value':'maestro',},
+    //     );
+    // },
 });

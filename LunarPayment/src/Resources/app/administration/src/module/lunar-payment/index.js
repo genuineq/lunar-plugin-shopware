@@ -1,4 +1,9 @@
 /**
+ * snippet
+ */
+ import enGB from './snippet/en_GB.json';
+
+ /**
  * component
  */
  import './component/lunar-payment-plugin-icon';
@@ -22,6 +27,10 @@ let moduleConfig = {
     version: '1.0.0',
     targetVersion: '1.0.0',
     icon: 'default-action-settings',
+
+    snippets: {
+        'en-GB': enGB
+    },
 
     routes: {
         index: {

@@ -54,7 +54,6 @@
                                 componentName: 'sw-single-select',
                                 label: getInlineSnippet(getElementBind(getBind(element, config)).config.label),
                                 helpText: getInlineSnippet(getElementBind(getBind(element, config)).config.helpText),
-                                options: transactionMode,
                             }"
                             v-model="config[element.name]"
                         />
@@ -65,7 +64,6 @@
                                 componentName: 'sw-single-select',
                                 label: getInlineSnippet(getElementBind(getBind(element, config)).config.label),
                                 helpText: getInlineSnippet(getElementBind(getBind(element, config)).config.helpText),
-                                options: captureMode,
                             }"
                             v-model="config[element.name]"
                         />
@@ -76,7 +74,6 @@
                                 componentName: 'sw-multi-select',
                                 label: getInlineSnippet(getElementBind(getBind(element, config)).config.label),
                                 helpText: getInlineSnippet(getElementBind(getBind(element, config)).config.helpText),
-                                options: acceptedCards,
                             }"
                             v-model="config[element.name]"
                         />

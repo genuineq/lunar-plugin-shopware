@@ -61,10 +61,13 @@
             "save": "Save",
             "titleSuccess": "Success",
             "titleError": "Error",
-            "liveAppKeyInvalid": "The APP/PRIVATE key is invalid",
-            "livePublicKeyInvalid": "The PUBLIC key is invalid",
-            "testAppKeyInvalid": "The TEST App/Private key is invalid",
-            "testPublicKeyInvalid": "The TEST Public key is invalid"
+            "generalSuccess": "All settings were saved.",
+            "generalError": "An error occurred. Please verify fields data and try again.",
+            "generalSaveError": "An error occurred during save settings. Please verify fields data and try again.",
+            "liveAppKeyInvalid": "The App key is invalid",
+            "livePublicKeyInvalid": "The Public key is invalid",
+            "testAppKeyInvalid": "The test App key is invalid",
+            "testPublicKeyInvalid": "The test Public key is invalid"
         },
         "messageNotBlank": "This field must not be empty.",
         "transactionId": "transaction ID",

@@ -8,7 +8,6 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Shopware\Core\Framework\Routing\Annotation\RouteScope;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 
 use LunarPayment\lib\ApiClient;
 use LunarPayment\Helpers\PluginHelper;
@@ -20,15 +19,11 @@ use LunarPayment\lib\Exception\ApiException;
  */
 class SettingsController extends AbstractController
 {
-    /** @var EntityRepository */
-    private $stateMachineTransitionRepository;
+    /** @var ApiClient */
+    private $apiClient;
 
-
-    public function __construct(
-        EntityRepository $stateMachineTransitionRepository
-    ) {
-        $this->stateMachineTransitionRepository = $stateMachineTransitionRepository;
-    }
+    private array $errors = [];
+    private string $transactionMode = '';
 
     /**
      * @RouteScope(scopes={"api"})
@@ -41,7 +36,7 @@ class SettingsController extends AbstractController
          * @TODO move/build code in specific methods
          */
 
-        $dataSaveAllowed = true;
+        $dataSaveAllowed = false;
 
         $pluginName = PluginHelper::PLUGIN_NAME;
         $configPath = PluginHelper::PLUGIN_CONFIG_PATH;
@@ -51,39 +46,46 @@ class SettingsController extends AbstractController
         // $liveAppKeyName = $configPath . 'liveModeAppKey';
         // $livePublicKeyName = $configPath . 'liveModePublicKey';
 
+        $transactionModeKeyName = 'transactionMode';
+
         $testAppKeyName = 'testModeAppKey';
         $testPublicKeyName = 'testModePublicKey';
         $liveAppKeyName = 'liveModeAppKey';
         $livePublicKeyName = 'liveModePublicKey';
 
         $settingsKeys = json_decode($request->getContent())->keys;
+        $this->transactionMode = ('test' == $settingsKeys->{$transactionModeKeyName}) ? ('test') : ('live');
 
-        // $appKeyValue = $settingsKeys->{$liveAppKeyName};
-        // if ('test' == $settingsKeys->transactionMode) {
-            $appKeyValue = $settingsKeys->{$testAppKeyName};
-        // }
+        if ('live' == $this->transactionMode) {
+            $appKeyValue = $settingsKeys->{$liveAppKeyName} ?? '';
+        }
+        if ('test' == $this->transactionMode) {
+            $appKeyValue = $settingsKeys->{$testAppKeyName} ?? '';
+        }
 
-        $apiClient = new ApiClient($appKeyValue);
+        $this->apiClient = new ApiClient($appKeyValue);
+
 
         try {
-            $identity = $apiClient->apps()->fetch();
-        } catch (ApiException $exception) {
-            /** Prevent saving key */
-            $dataSaveAllowed = false;
+            $identity = $this->apiClient->apps()->fetch();
 
-            $message = "The test private key doesn't seem to be valid.";
+        } catch (ApiException $exception) {
+
+            $message = "The app key doesn't seem to be valid.";
             $message = ValidationHelper::handleExceptions($exception, $message);
 
+            $this->errors["{$this->transactionMode}ModeAppKey"] = $message;
+
             return new JsonResponse([
-                'status'  => false,
+                'status'  => empty($this->errors),
                 'message' => $message,
                 'code'    => 0,
-                'errors'=> $errors ?? [],
+                'errors'=> $this->errors,
             ], 400);
         }
 
         try {
-            $merchants = $apiClient->merchants()->find($identity['id']);
+            $merchants = $this->apiClient->merchants()->find($identity['id']);
             if ($merchants) {
                 foreach ($merchants as $merchant) {
                     if ($merchant['test']) {
@@ -96,25 +98,26 @@ class SettingsController extends AbstractController
         }
 
         if (empty($validationKeys)) {
-            /** Mark the new value as invalid */
-            $dataSaveAllowed = false;
-
-            $message = __("The test private key is not valid or set to live mode.");
-            throw new \Exception($message);
+            return new JsonResponse([
+                'status'  =>  empty($this->errors),
+                'message' => 'The test private key is not valid or set to live mode.',
+                'code'    => 0,
+                'errors'  => $this->errors,
+            ], 400);
         }
 
         return new JsonResponse([
-            'status'  => true,
+            'status'  =>  empty($this->errors),
             'message' => 'Success',
             'code'    => 0,
-            'errors'=> [],
+            'errors'  => $this->errors,
         ], 200); // need to adapt this response
     }
 
     /**
      *
      */
-    public function validateTestAppKey($testAppKeyValue)
+    public function validateAppKey($testAppKeyValue)
     {
 
     }
@@ -122,24 +125,40 @@ class SettingsController extends AbstractController
     /**
      *
      */
-    public function validateTestPublicKey($testPublicKeyValue)
+    public function validatePublicKey($testPublicKeyValue)
     {
 
     }
 
-    /**
-     *
-     */
-    public function validateLiveAppKey($liveAppKeyValue)
-    {
+    // /**
+    //  *
+    //  */
+    // public function validateTestAppKey($testAppKeyValue)
+    // {
 
-    }
+    // }
 
-    /**
-     *
-     */
-    public function validateLivePublicKey($livePublicKeyValue)
-    {
+    // /**
+    //  *
+    //  */
+    // public function validateTestPublicKey($testPublicKeyValue)
+    // {
 
-    }
+    // }
+
+    // /**
+    //  *
+    //  */
+    // public function validateLiveAppKey($liveAppKeyValue)
+    // {
+
+    // }
+
+    // /**
+    //  *
+    //  */
+    // public function validateLivePublicKey($livePublicKeyValue)
+    // {
+
+    // }
 }
