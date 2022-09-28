@@ -1,7 +1,7 @@
 /**
  * snippet
  */
- import enGB from './snippet/en_GB.json';
+ import enGB from '../../snippet/en_GB.json';
 
  /**
  * component
@@ -11,7 +11,7 @@
  /**
   * extension
   */
- import './extension/sw-settings-index';
+ import './extension/sw-settings-index/index';
 
  /**
   * page
@@ -45,7 +45,7 @@ let moduleConfig = {
     settingsItem: {
         group: 'plugins',
         to: 'lunar.payment.index',
-        iconComponent: 'lunar-payment-plugin-icon',
+        iconComponent: 'lunar-plugin-icon',
         backgroundEnabled: false,
     },
 
@@ -54,4 +54,4 @@ let moduleConfig = {
  /**
   * REGISTER
   */
- Shopware.Module.register('lunar-payment', moduleConfig);
+ Shopware.Module.register('lunar-payment-settings', moduleConfig);

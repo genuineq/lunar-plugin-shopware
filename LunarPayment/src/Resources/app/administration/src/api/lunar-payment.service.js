@@ -2,14 +2,14 @@ const { Application } = Shopware;
 const ApiService = Shopware.Classes.ApiService;
 
 class LunarPaymentService extends ApiService {
-    constructor(httpClient, loginService, apiEndpoint = 'lunar') {
+    constructor(httpClient, loginService, apiEndpoint = 'lunar_payment') {
         super(httpClient, loginService, apiEndpoint);
-        this.apiRoute = `_action/${this.getApiBasePath()}/capture-payment`;
+        this.apiRoute = `_action/${this.getApiBasePath()}`;
     }
 
     capturePayment(requestBody) {
         return this.httpClient.post(
-            this.apiRoute,
+            this.apiRoute + '/capture',
             requestBody,
             {
                 headers: this.getBasicHeaders()
@@ -21,7 +21,7 @@ class LunarPaymentService extends ApiService {
 
     refundPayment(requestBody) {
         return this.httpClient.post(
-            this.apiRoute,
+            this.apiRoute + '/refund',
             requestBody,
             {
                 headers: this.getBasicHeaders()
@@ -33,7 +33,7 @@ class LunarPaymentService extends ApiService {
 
     voidPayment(requestBody) {
         return this.httpClient.post(
-            this.apiRoute,
+            this.apiRoute + '/void',
             requestBody,
             {
                 headers: this.getBasicHeaders()
