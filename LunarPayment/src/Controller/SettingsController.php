@@ -55,7 +55,7 @@ class SettingsController extends AbstractController
             'message' => 'Success',
             'code'    => 0,
             'errors'  => $this->errors,
-        ], 200); // need to adapt this response
+        ], 200);
     }
 
 

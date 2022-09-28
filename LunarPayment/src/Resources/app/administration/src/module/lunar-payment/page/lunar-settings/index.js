@@ -39,9 +39,6 @@ Component.register('lunar-settings', {
             showValidationErrors: false,
             showApiErrors: false,
             apiResponseErrors: {},
-            // transactionModeSelect: [],
-            // captureMode: [],
-            // acceptedCards: [],
         };
     },
 
@@ -273,27 +270,21 @@ Component.register('lunar-settings', {
 
             return bind;
         },
+
+        /**
+         *
+         */
+        hideField(element) {
+            if (
+                ("debug" !== location.href.split('?')[1]) // location.search returns null because of '#' used in admin url
+                && (element.name.includes('transactionMode')
+                    || element.name.includes('testModeAppKey')
+                    || element.name.includes('testModePublicKey'))
+            ) {
+                return false;
+            }
+
+            return true;
+        }
     },
-
-    /**
-     *
-     */
-    // generateFieldOptions() {
-    //     this.transactionModeSelect.push(
-    //         {'label':'Live', 'value':'live',},
-    //         {'label':'Test', 'value':'test',},
-    //     );
-
-    //     this.captureMode.push(
-    //         {'label':'Delayed', 'value':'delayed',},
-    //         {'label':'Instant', 'value':'instant',},
-    //     );
-
-    //     this.acceptedCards.push(
-    //         {'label':'Visa',         'value':'visa',},
-    //         {'label':'Visaelectron', 'value':'visaelectron',},
-    //         {'label':'Mastercard',   'value':'mastercard',},
-    //         {'label':'Maestro',      'value':'maestro',},
-    //     );
-    // },
 });

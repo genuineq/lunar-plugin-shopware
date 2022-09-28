@@ -40,7 +40,8 @@
                 domain="LunarPayment.settings">
 
                 <template #card-element="{element, config, card}">
-                    <div>
+
+                    <div v-show="hideField(element)">
 
                         <sw-form-field-renderer
                             v-if="!element.name.includes('transactionMode') || !element.name.includes('supportedCards') || !element.name.includes('captureMode')"
@@ -79,6 +80,7 @@
                         />
 
                     </div>
+
                 </template>
             </sw-system-config>
         </sw-card-view>
