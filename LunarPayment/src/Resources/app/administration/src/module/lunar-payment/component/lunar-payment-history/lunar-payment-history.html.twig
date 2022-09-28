@@ -1,0 +1,29 @@
+{% block lunar_payment_history %}
+    <sw-card :title="$tc('lunar-payment.paymentDetails.history.cardTitle')">
+        {% block lunar_payment_history_container %}
+            <template #grid>
+                {% block lunar_payment_history_data_grid %}
+                    <sw-data-grid
+                        :dataSource="data"
+                        :columns="columns"
+                        :showSelection="false"
+                        sortBy="date">
+
+                        {% block lunar_payment_history_actions %}
+                            <template #actions="{ item }">
+                                {% block lunar_payment_history_data_grid_item_actions %}
+                                    <lunar-payment-actions
+                                        :transactionResource="item.resource"
+                                        :paymentResource="paymentResource"
+                                        :decimalPrecision="decimalPrecision"
+                                        @reload="reloadPaymentDetails">
+                                    </lunar-payment-actions>
+                                {% endblock %}
+                            </template>
+                        {% endblock %}
+                    </sw-data-grid>
+                {% endblock %}
+            </template>
+        {% endblock %}
+    </sw-card>
+{% endblock %}

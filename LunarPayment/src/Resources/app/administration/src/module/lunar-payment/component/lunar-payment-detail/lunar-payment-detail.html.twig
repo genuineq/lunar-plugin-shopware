@@ -1,0 +1,49 @@
+{% block lunar_payment_detail %}
+    <sw-card class="lunar-payment-detail" :title="$tc('lunar-payment.paymentDetails.detail.cardTitle')">
+        <template>
+            {% block lunar_payment_detail_container %}
+                <sw-container columns="1fr 1fr" gap="0 20px">
+                    {% block lunar_payment_detail_container_left %}
+                        <sw-description-list class="lunar-payment-detail">
+                            <dt>{{ $tc('lunar-payment.paymentDetails.detail.amountRemaining') }}</dt>
+                            <dd>{{ remainingAmount | currency(paymentResource.currency) }}</dd>
+
+                            <dt>{{ $tc('lunar-payment.paymentDetails.detail.amountCancelled') }}</dt>
+                            <dd>{{ cancelledAmount | currency(paymentResource.currency) }}</dd>
+
+                            <dt>{{ $tc('lunar-payment.paymentDetails.detail.amountCharged') }}</dt>
+                            <dd>{{ chargedAmount | currency(paymentResource.currency) }}</dd>
+
+                            {% block lunar_payment_detail_container_left_inner %}{% endblock %}
+                        </sw-description-list>
+                    {% endblock %}
+
+                    {% block lunar_payment_detail_container_right %}
+                        <sw-description-list class="lunar-payment-detail">
+                            <dt>{{ $tc('lunar-payment.paymentDetails.detail.shortId') }}</dt>
+                            <dd>{{ paymentResource.shortId }}</dd>
+
+                            <dt>{{ $tc('lunar-payment.paymentDetails.detail.id') }}</dt>
+                            <dd>{{ paymentResource.id }}</dd>
+
+                            <dt>{{ $tc('lunar-payment.paymentDetails.detail.state') }}</dt>
+                            <dd>{{ paymentResource.state.name }}</dd>
+
+                            {% block lunar_payment_detail_container_right_inner %}{% endblock %}
+                        </sw-description-list>
+                    {% endblock %}
+                </sw-container>
+            {% endblock %}
+        </template>
+
+        {% block lunar_payment_detail_footer %}
+            <template #footer v-if="paymentResource.isShipmentAllowed">
+                {% block lunar_payment_detail_ship_button %}
+                    <sw-button-process :isLoading="isLoading" :processSuccess="isSuccessful" @click="ship">
+                        {{ $tc('lunar-payment.paymentDetails.actions.shipButton') }}
+                    </sw-button-process>
+                {% endblock %}
+            </template>
+        {% endblock %}
+    </sw-card>
+{% endblock %}
