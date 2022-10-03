@@ -34,6 +34,7 @@
         <service id="LunarPayment\Helpers\LogHelper"></service>
 
         <service id="LunarPayment\Subscriber\OrderTransactionStateChangeSubscriber">
+            <argument type="service" id="state_machine_history.repository"/>
             <argument type="service" id="lunar_transaction.repository"/>
             <argument type="service" id="LunarPayment\Helpers\OrderHelper"/>
             <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService"/>

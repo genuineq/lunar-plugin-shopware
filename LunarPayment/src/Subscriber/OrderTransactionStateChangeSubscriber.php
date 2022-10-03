@@ -2,11 +2,11 @@
 
 namespace LunarPayment\Subscriber;
 
+use LunarPayment\lib\ApiClient;
 use LunarPayment\Helpers\OrderHelper;
 use LunarPayment\Helpers\PluginHelper;
 use LunarPayment\Helpers\CurrencyHelper;
 use LunarPayment\Helpers\LogHelper as Logger;
-use LunarPayment\lib\ApiClient;
 
 use Shopware\Core\Defaults;
 use Shopware\Core\Checkout\Order\OrderEvents;
@@ -14,6 +14,7 @@ use Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionEnti
 use Shopware\Core\System\SystemConfig\SystemConfigService;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
+use Shopware\Core\Framework\Api\Exception\ExceptionFailedException;
 use Shopware\Core\Framework\DataAbstractionLayer\Event\EntityWrittenEvent;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -24,6 +25,9 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  */
 class OrderTransactionStateChangeSubscriber implements EventSubscriberInterface
 {
+    /** @var EntityRepository */
+    private $stateMachineHistory;
+
     /** @var EntityRepository */
     private $lunarTransactionRepository;
 
@@ -40,11 +44,13 @@ class OrderTransactionStateChangeSubscriber implements EventSubscriberInterface
     private $orderTransaction;
 
     public function __construct(
+        EntityRepository $stateMachineHistory,
         EntityRepository $lunarTransactionRepository,
         OrderHelper $orderHelper,
         SystemConfigService $systemConfigService,
         Logger $logger
     ) {
+        $this->stateMachineHistory = $stateMachineHistory;
         $this->lunarTransactionRepository = $lunarTransactionRepository;
         $this->orderHelper = $orderHelper;
         $this->systemConfigService = $systemConfigService;
@@ -73,42 +79,47 @@ class OrderTransactionStateChangeSubscriber implements EventSubscriberInterface
             $privateApiKey = $this->systemConfigService->get($configPath . 'liveModeAppKey');
         }
 
+        $isAdminAction = false;
+        $errors = [];
+
         foreach ($event->getIds() as $transactionId) {
-            $transaction = $this->orderTransaction = $this->orderHelper->getTransactionById($transactionId, $context);
-
-            /**
-             * Check payment method
-             * Check order transaction state sent
-             */
-            if (PluginHelper::PAYMENT_METHOD_UUID !== $transaction->paymentMethodId) return $this;
-
-            $transactionTechnicalName = $transaction->getStateMachineState()->technicalName;
-
-            /** Defaults to authorize. */
-            $dbTransactionPreviousState = OrderHelper::AUTHORIZE_STATUS;
-
-            /** Map statuses based on shopware actions (transaction states sent) */
-            switch ($transactionTechnicalName) {
-                case OrderHelper::TRANSACTION_PAID:
-                    $dbTransactionPreviousState = OrderHelper::AUTHORIZE_STATUS;
-                    $transactionType = OrderHelper::CAPTURE_STATUS;
-                    $amountToCheck = 'capturedAmount';
-                    break;
-                case OrderHelper::TRANSACTION_REFUNDED:
-                    $dbTransactionPreviousState = OrderHelper::CAPTURE_STATUS;
-                    $transactionType = OrderHelper::REFUND_STATUS;
-                    $amountToCheck = 'refundedAmount';
-                    break;
-                case OrderHelper::TRANSACTION_VOIDED:
-                    $dbTransactionPreviousState = OrderHelper::AUTHORIZE_STATUS;
-                    $transactionType = OrderHelper::VOID_STATUS;
-                    $amountToCheck = 'voidedAmount';
-                    break;
-                default:
-                    continue;
-            }
-
             try {
+                $transaction = $this->orderTransaction = $this->orderHelper->getTransactionById($transactionId, $context);
+
+                /**
+                 * Check payment method
+                 */
+                if (PluginHelper::PAYMENT_METHOD_UUID !== $transaction->paymentMethodId) {
+                    continue;
+                }
+
+                $transactionTechnicalName = $transaction->getStateMachineState()->technicalName;
+
+                /** Defaults to authorize. */
+                $dbTransactionPreviousState = OrderHelper::AUTHORIZE_STATUS;
+
+                /**
+                 * Check order transaction state sent
+                 * Map statuses based on shopware actions (transaction state sent)
+                 */
+                switch ($transactionTechnicalName) {
+                    case OrderHelper::TRANSACTION_PAID:
+                        $dbTransactionPreviousState = OrderHelper::AUTHORIZE_STATUS;
+                        $transactionType = OrderHelper::CAPTURE_STATUS;
+                        $amountToCheck = 'capturedAmount';
+                        break;
+                    case OrderHelper::TRANSACTION_REFUNDED:
+                        $dbTransactionPreviousState = OrderHelper::CAPTURE_STATUS;
+                        $transactionType = OrderHelper::REFUND_STATUS;
+                        $amountToCheck = 'refundedAmount';
+                        break;
+                    case OrderHelper::TRANSACTION_VOIDED:
+                        $dbTransactionPreviousState = OrderHelper::AUTHORIZE_STATUS;
+                        $transactionType = OrderHelper::VOID_STATUS;
+                        $amountToCheck = 'voidedAmount';
+                        break;
+                }
+
                 /**
                  * Check transaction registered in custom table
                  */
@@ -119,7 +130,12 @@ class OrderTransactionStateChangeSubscriber implements EventSubscriberInterface
 
                 $paymentTransaction = $this->lunarTransactionRepository->search($criteria, $context)->first();
 
-                if (!$paymentTransaction) return $this;
+                if (!$paymentTransaction) {
+                    continue;
+                }
+
+                /** If arrive here, then it is an admin action. */
+                $isAdminAction = true;
 
                 $paymentTransactionId = $paymentTransaction->getTransactionId();
 
@@ -132,17 +148,22 @@ class OrderTransactionStateChangeSubscriber implements EventSubscriberInterface
                 $apiClient = new ApiClient($privateApiKey);
                 $fetchedTransaction = $apiClient->transactions()->fetch($paymentTransactionId);
 
-                if (!$fetchedTransaction) return $this;
+                if (!$fetchedTransaction) {
+                    $errors[$transactionId][] = 'Fetch transaction failed: amount mismatch';
+                    continue;
+                }
 
                 $totalPrice = $transaction->amount->getTotalPrice();
                 $currencyCode = $transaction->getOrder()->getCurrency()->isoCode;
                 $amountValue = (int) CurrencyHelper::getAmountInMinor($currencyCode, $totalPrice);
 
                 if ($fetchedTransaction['amount'] !== $amountValue) {
-                    return $this;
+                    $errors[$transactionId][] = 'Fetch transaction failed: amount mismatch';
+                    continue;
                 }
                 if ($fetchedTransaction['currency'] !== $currencyCode) {
-                    return $this;
+                    $errors[$transactionId][] = 'Fetch transaction failed: currency mismatch';
+                    continue;
                 }
 
                 $transactionData = [
@@ -153,8 +174,10 @@ class OrderTransactionStateChangeSubscriber implements EventSubscriberInterface
                 $result['successful'] = false;
 
                 if ($this->isCaptureAction() && $fetchedTransaction['pendingAmount'] !== 0) {
-                    if ($fetchedTransaction['pendingAmount'] !== $amountValue) {
-                        return $this;
+                    // if ($fetchedTransaction['pendingAmount'] !== $amountValue) {
+                    if ($fetchedTransaction['pendingAmount'] !== 12) {
+                        $errors[$transactionId][] = 'Capture api call failed: pendingAmount mismatch';
+                        continue;
                     }
 
                     /** Make capture. */
@@ -162,7 +185,8 @@ class OrderTransactionStateChangeSubscriber implements EventSubscriberInterface
 
                 } elseif ($this->isRefundAction() && $fetchedTransaction['capturedAmount'] !== 0) {
                     if ($fetchedTransaction['capturedAmount'] !== $amountValue) {
-                        return $this;
+                        $errors[$transactionId][] = 'Refund api call failed: capturedAmount mismatch';
+                        continue;
                     }
 
                     /** Make refund. */
@@ -171,21 +195,23 @@ class OrderTransactionStateChangeSubscriber implements EventSubscriberInterface
 
                 } elseif ($this->isVoidAction() && $fetchedTransaction['pendingAmount'] !== 0) {
                     if ($fetchedTransaction['pendingAmount'] !== $amountValue) {
-                        return $this;
+                        $errors[$transactionId][] = 'Void api call failed: pendingAmount mismatch';
+                        continue;
                     }
 
                     /** Make void. */
                     $result = $apiClient->transactions()->void($paymentTransactionId, $transactionData);
 
-                } else {
-                    return $this;
+                } else  {
+                    continue;
                 }
 
                 $this->logger->writeLog([strtoupper($transactionTechnicalName) . ' request data: ', $transactionData]);
 
                 if (true !== $result['successful']) {
                     $this->logger->writeLog(['Error: ', $result]);
-                    return $this;
+                    $errors[$transactionId][] = 'Transaction api action was unsuccesfull';
+                    continue;
                 }
 
                 $transactionAmount = CurrencyHelper::getAmountInMajor($currencyCode, $result[$amountToCheck]);
@@ -208,8 +234,26 @@ class OrderTransactionStateChangeSubscriber implements EventSubscriberInterface
                 $this->logger->writeLog(['Succes: ', $transactionData[0]]);
 
             } catch (\Exception $e) {
-                $this->logger->writeLog(['Error: ', $e->getMessage()]);
+                $errors[] = $e->getMessage();
             }
+        }
+
+        if (!empty($errors) && $isAdminAction) {
+            /**
+             * Revert order transaction to previous state
+             */
+            foreach ($errors as $transactionIdKey => $errorMessages) {
+                $criteria = new Criteria();
+                $criteria->addFilter(new EqualsFilter('entity_id', $transactionIdKey));
+                $criteria->addFilter(new EqualsFilter('transactionType',  $dbTransactionPreviousState));
+
+                $paymentTransaction = $this->lunarTransactionRepository->search($criteria, $context)->first();
+
+                // $this->stateMachineHistory->
+            }
+
+            $this->logger->writeLog(['ADMIN ACTION ERRORS: ', json_encode($errors)]);
+            throw new ExceptionFailedException($errors);
         }
     }
 
