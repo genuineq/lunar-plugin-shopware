@@ -68,8 +68,7 @@ Component.register('lunar-payment-tab', {
                         return;
                     }
 
-                    if (!orderTransaction.customFields.lunar_payment_is_transaction
-                        && !orderTransaction.customFields.heidelpay_is_transaction) {
+                    if (!orderTransaction.customFields.lunar_payment_is_transaction) {
                         return;
                     }
 
@@ -77,7 +76,7 @@ Component.register('lunar-payment-tab', {
                         .then((response) => {
                             this.isLoading = false;
 
-                            this.paymentResources.push(response);
+                            this.paymentResources.push(JSON.parse(response.transaction));
                         })
                         .catch(() => {
                             this.createNotificationError({

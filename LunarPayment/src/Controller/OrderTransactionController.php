@@ -7,14 +7,13 @@ use Shopware\Core\Framework\Context;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Shopware\Core\Framework\Routing\Annotation\RouteScope;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionEntity;
 use Shopware\Core\System\SystemConfig\SystemConfigService;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\Api\Exception\ExceptionFailedException;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
+use Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionEntity;
 
 use LunarPayment\lib\ApiClient;
 use LunarPayment\Helpers\OrderHelper;
@@ -27,7 +26,7 @@ use LunarPayment\Helpers\LogHelper as Logger;
 /**
  * Responsible for handling order payment transactions
  *
- * @RouteScope(scopes={"api"})
+ * @Route(defaults={"_routeScope"={"api"}})
  */
 class OrderTransactionController extends AbstractController
 {
@@ -65,6 +64,27 @@ class OrderTransactionController extends AbstractController
         $this->orderHelper = $orderHelper;
         $this->systemConfigService = $systemConfigService;
         $this->logger = $logger;
+    }
+
+    /**
+     * FETCH TRANSACTION
+     *
+     * @Route("/api/_action/lunar_payment/fetch-transaction/{orderTransactionId}", name="api.action.lunar_payment.fetch-transaction.transaction", methods={"POST"})
+     */
+    public function fetchTransaction(string $orderTransactionId, Context $context): JsonResponse
+    {
+        $errors = [];
+
+
+        $transaction = $this->orderHelper->getOrderTransaction($orderTransactionId, $context);
+
+        return new JsonResponse([
+            'status'  =>  empty($errors),
+            'message' => 'Success',
+            'code'    => 0,
+            'errors'  => $errors,
+            'transaction' => $transaction,
+        ], 200);
     }
 
     /**

@@ -125,6 +125,23 @@ class OrderHelper
     /**
      *
      */
+    public function getOrderTransaction(string $orderTransactionId, Context $context): ?OrderTransactionEntity
+    {
+        $criteria = new Criteria([$orderTransactionId]);
+        $criteria->addAssociations([
+            'order',
+            'order.currency',
+            'order.lineItems',
+            'order.deliveries',
+            'paymentMethod',
+        ]);
+
+        return $this->orderTransactionRepository->search($criteria, $context)->first();
+    }
+
+    /**
+     *
+     */
     public static function getTransactionStatuses()
     {
         return [

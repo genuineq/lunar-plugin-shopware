@@ -1,14 +1,29 @@
+/**
+ * snippet
+ */
+import enGB from '../../snippet/en_GB.json';
+
+/**
+ * component
+ */
 import './component/lunar-payment-actions';
 import './component/lunar-payment-detail';
 import './component/lunar-payment-history';
 import './component/lunar-payment-metadata';
 import './component/lunar-payment-basket';
+
+/**
+ * extension
+ */
 import './extension/sw-order-create-details-footer';
 import './extension/sw-order-detail';
 import './extension/sw-order-list';
+
+/**
+ * page
+ */
 import './page/lunar-payment-tab';
 
-import enGB from '../../snippet/en_GB.json';
 
 
 Shopware.Module.register('lunar-payment', {

@@ -1,22 +1,22 @@
 /**
  * snippet
  */
- import enGB from '../../snippet/en_GB.json';
+import enGB from '../../snippet/en_GB.json';
 
- /**
+/**
  * component
  */
- import './component/lunar-payment-plugin-icon';
+import './component/lunar-payment-plugin-icon';
 
- /**
-  * extension
-  */
- import './extension/sw-settings-index/index';
+/**
+ * extension
+ */
+import './extension/sw-settings-index/index';
 
- /**
-  * page
-  */
- import './page/lunar-settings';
+/**
+ * page
+ */
+import './page/lunar-settings';
 
 
 let moduleConfig = {
