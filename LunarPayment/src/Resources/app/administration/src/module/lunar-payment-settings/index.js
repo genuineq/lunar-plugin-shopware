@@ -44,8 +44,8 @@ let moduleConfig = {
 
     settingsItem: {
         group: 'plugins',
-        to: 'lunar.payment.index',
-        iconComponent: 'lunar-plugin-icon',
+        to: 'lunar.payment.settings.index',
+        iconComponent: 'lunar-payment-plugin-icon',
         backgroundEnabled: false,
     },
 

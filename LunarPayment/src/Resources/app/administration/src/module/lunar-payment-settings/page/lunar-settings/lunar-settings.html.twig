@@ -1,7 +1,7 @@
-{% block lunar_payment %}
-<sw-page class="lunar-payment">
+{% block lunar_settings %}
+<sw-page class="lunar-settings">
 
-    {% block lunar_payment_header %}
+    {% block lunar_settings_header %}
     <template #smart-bar-header>
         <h2>
             {{ $tc('sw-settings.index.title') }}
@@ -11,9 +11,9 @@
     </template>
     {% endblock %}
 
-    {% block lunar_payment_actions %}
+    {% block lunar_settings_actions %}
     <template #smart-bar-actions>
-        {% block lunar_payment_settings_actions_save %}
+        {% block lunar_settings_actions_save %}
         <sw-button-process
                 class="sw-settings-login-registration__save-action"
                 :isLoading="isLoading"
@@ -28,7 +28,7 @@
     </template>
     {% endblock %}
 
-    {% block lunar_payment_settings_content %}
+    {% block lunar_settings_content %}
     <template #content>
         <sw-card-view>
             <sw-system-config
