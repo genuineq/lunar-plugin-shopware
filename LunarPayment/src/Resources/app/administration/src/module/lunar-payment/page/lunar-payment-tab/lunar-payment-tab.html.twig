@@ -1,34 +1,16 @@
 {% block lunar_payment_payment_details %}
+
     <div class="lunar-payment-detail">
+
         <div v-if="!isLoading">
             {% block lunar_payment_payment_details_content %}
-                <template v-for="paymentResource in paymentResources">
-                    {% block lunar_payment_payment_details_content_payment_detail %}
-                        <lunar-payment-detail
-                            :paymentResource="paymentResource"
-                            @reload="reloadPaymentDetails">
-                        </lunar-payment-detail>
-                    {% endblock %}
+                <template v-if="lunarTransactions">
 
                     {% block lunar_payment_payment_details_content_payment_history %}
                         <lunar-payment-history
-                            :paymentResource="paymentResource"
+                            :lunarTransactions="lunarTransactions"
                             @reload="reloadPaymentDetails">
                         </lunar-payment-history>
-                    {% endblock %}
-
-                    {% block lunar_payment_payment_details_content_payment_basket %}
-                        <lunar-payment-basket
-                            :paymentResource="paymentResource"
-                            @reload="reloadPaymentDetails">
-                        </lunar-payment-basket>
-                    {% endblock %}
-
-                    {% block lunar_payment_payment_details_content_payment_metadata %}
-                        <lunar-payment-metadata
-                            :paymentResource="paymentResource"
-                            @reload="reloadPaymentDetails">
-                        </lunar-payment-metadata>
                     {% endblock %}
 
                     {% block lunar_payment_payment_details_content_inner %}{% endblock %}

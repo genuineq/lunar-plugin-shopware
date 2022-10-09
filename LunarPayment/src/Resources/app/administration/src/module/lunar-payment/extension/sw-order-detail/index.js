@@ -14,7 +14,7 @@ Component.override('sw-order-detail', {
 
     computed: {
         showTabs() {
-            return true; // TODO remove with PT-10455
+            return this.isLunarPayment;
         }
     },
 
@@ -24,27 +24,21 @@ Component.override('sw-order-detail', {
             handler() {
                 if (!this.orderId) {
                     this.isLunarPayment = false;
-
                     return;
                 }
 
-                const orderRepository = this.repositoryFactory.create('order');
-                const orderCriteria = new Criteria(1, 1);
-                orderCriteria.addAssociation('transactions');
+                const lunarTransactionRepository = this.repositoryFactory.create('lunar_transaction');
 
-                orderRepository.get(this.orderId, Context.api, orderCriteria).then((order) => {
-                    order.transactions.forEach((orderTransaction) => {
-                        if (!orderTransaction.customFields) {
-                            return;
-                        }
+                const criteria = new Criteria();
+                criteria.addFilter(Criteria.equals('orderId', this.orderId));
 
-                        if (!orderTransaction.customFields.lunar_payment_is_transaction
-                            && !orderTransaction.customFields.heidelpay_is_transaction) {
-                            return;
-                        }
+                lunarTransactionRepository.search(criteria, Context.api).then((lunarTransactions) => {
 
-                        this.isLunarPayment = true;
-                    });
+                    if (!lunarTransactions) {
+                        return;
+                    }
+
+                    this.isLunarPayment = true;
                 });
             },
             immediate: true

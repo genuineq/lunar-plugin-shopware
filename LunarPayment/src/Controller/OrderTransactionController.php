@@ -69,28 +69,34 @@ class OrderTransactionController extends AbstractController
     /**
      * FETCH TRANSACTION
      *
-     * @Route("/api/_action/lunar_payment/fetch-transaction/{orderTransactionId}", name="api.action.lunar_payment.fetch-transaction.transaction", methods={"POST"})
+     * @Route("/api/_action/lunar_payment/{orderId}/fetch-transactions", name="api.action.lunar_payment.order_id.fetch-transactions", methods={"POST"})
      */
-    public function fetchTransaction(string $orderTransactionId, Context $context): JsonResponse
+    public function fetchTransactions(string $orderId, Context $context): JsonResponse
     {
         $errors = [];
 
 
-        $transaction = $this->orderHelper->getOrderTransaction($orderTransactionId, $context);
+        /**
+         * Check transaction registered in custom table
+         */
+        $criteria = new Criteria();
+        $criteria->addFilter(new EqualsFilter('orderId', $orderId));
+
+        $lunarTransactions = $this->lunarTransactionRepository->search($criteria, $context);
 
         return new JsonResponse([
             'status'  =>  empty($errors),
             'message' => 'Success',
             'code'    => 0,
             'errors'  => $errors,
-            'transaction' => $transaction,
+            'transactions' => $lunarTransactions->getElements(),
         ], 200);
     }
 
     /**
      * CAPTURE
      *
-     * @Route("/api/_action/lunar_payment/capture", name="api.action.lunar_payment.capture", methods={"POST"})
+     * @Route("/api/_action/lunar_payment/{lunarTransactionId}/capture", name="api.action.lunar_payment.lunarTransactionId.capture", methods={"POST"})
      */
     public function capture(Request $request, Context $context): JsonResponse
     {

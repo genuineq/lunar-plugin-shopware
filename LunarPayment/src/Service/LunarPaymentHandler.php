@@ -3,14 +3,15 @@
 namespace LunarPayment\Service;
 
 use Shopware\Core\Defaults;
+use Shopware\Core\Framework\Context;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Shopware\Core\System\SystemConfig\SystemConfigService;
 use Shopware\Core\Framework\Validation\DataBag\RequestDataBag;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Checkout\Payment\Cart\SyncPaymentTransactionStruct;
+use Shopware\Core\Checkout\Payment\Exception\SyncPaymentProcessException;
 use Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionStateHandler;
 use Shopware\Core\Checkout\Payment\Cart\PaymentHandler\SynchronousPaymentHandlerInterface;
-use Shopware\Core\Checkout\Payment\Exception\SyncPaymentProcessException;
 
 use LunarPayment\lib\ApiClient;
 use LunarPayment\Helpers\OrderHelper;
@@ -33,6 +34,9 @@ class LunarPaymentHandler implements SynchronousPaymentHandlerInterface
     /** @var EntityRepository */
     private $lunarTransactionRepository;
 
+    /** @var EntityRepository */
+    private $orderTransactionRepository;
+
     /** @var Logger */
     private $logger;
 
@@ -40,14 +44,24 @@ class LunarPaymentHandler implements SynchronousPaymentHandlerInterface
         OrderTransactionStateHandler $transactionStateHandler,
         SystemConfigService $systemConfigService,
         EntityRepository $lunarTransactionRepository,
+        EntityRepository $orderTransactionRepository,
         Logger $logger
     ) {
         $this->transactionStateHandler = $transactionStateHandler;
         $this->systemConfigService = $systemConfigService;
         $this->lunarTransactionRepository = $lunarTransactionRepository;
+        $this->orderTransactionRepository = $orderTransactionRepository;
         $this->logger = $logger;
     }
 
+    /**
+     * Process frontend payment
+     *
+     * @param SyncPaymentTransactionStruct $transaction
+     * @param RequestDataBag $dataBag
+     * @param SalesChannelContext $salesChannelContext
+     * @return void
+     */
     public function pay(SyncPaymentTransactionStruct $transaction, RequestDataBag $dataBag, SalesChannelContext $salesChannelContext): void
     {
         /** Prepare vars. */
@@ -93,7 +107,7 @@ class LunarPaymentHandler implements SynchronousPaymentHandlerInterface
                 $privateApiKey = $this->systemConfigService->get($configPath . 'testModeAppKey');
             }
 
-            // instantiate API Client
+            /** Instantiate API Client */
             $apiClient = new ApiClient($privateApiKey);
 
             $captureTransactionData = [
@@ -128,7 +142,31 @@ class LunarPaymentHandler implements SynchronousPaymentHandlerInterface
             }
         }
 
+        /** Add transactionId to order transaction custom fields. */
+        $this->updateOrderTransactionCustomFields($transaction, $context, ['lunar_transaction_id' => $transactionId]);
+
         /** Insert transaction data to custom table. */
         $this->lunarTransactionRepository->create($transactionData, $context);
+    }
+
+    /**
+     * Add transactionId to order transaction custom fields
+     *
+     * @param SyncPaymentTransactionStruct $transaction
+     * @param Context $context
+     * @param array $data
+     * @return void
+     */
+    private function updateOrderTransactionCustomFields(SyncPaymentTransactionStruct $transaction, Context $context, array $data): void
+    {
+        $customFields = $transaction->getOrderTransaction()->getCustomFields() ?? [];
+        $customFields = array_merge($customFields, $data);
+
+        $updateData = [
+            'id'           => $transaction->getOrderTransaction()->getId(),
+            'customFields' => $customFields,
+        ];
+
+        $this->orderTransactionRepository->update([$updateData], $context);
     }
 }

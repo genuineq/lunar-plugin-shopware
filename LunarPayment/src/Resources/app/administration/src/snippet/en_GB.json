@@ -5,58 +5,6 @@
             "mainMenuItemGeneral": "Lunar Payment",
             "descriptionTextModule": "Settings for Lunar Payment"
         },
-        "capture": {
-            "buttonTitle": "Capture",
-            "successMessage": "Capture was successful.",
-            "errorMessage": "Capture action failed.",
-            "tooltips": {
-                "impossible": "Capture not possible"
-            }
-        },
-        "refund": {
-            "buttonTitle": "Refund",
-            "successMessage": "Refund was successful.",
-            "errorMessage": "Refund action failed.",
-            "tooltips": {
-                "impossible": "Refund not possible"
-            }
-        },
-        "void": {
-            "buttonTitle": "Void",
-            "successMessage": "Void was successful.",
-            "errorMessage": "Void action failed.",
-            "tooltips": {
-                "impossible": "Void not possible"
-            }
-        },
-        "modal": {
-            "capture": {
-                "title": "Capture",
-                "submit": "Capture",
-                "fullSubmit": "Full capture",
-                "amount": "Capture amount",
-                "captured": "Captured amount"
-            },
-            "refund": {
-                "title": "Refund",
-                "submit": "Refund",
-                "fullSubmit": "Full Refund",
-                "amount": "Refund amount",
-                "refunded": "Refunded amount"
-            },
-            "orderAmount": "Order amount",
-            "remainingAmount": "Remaining amount",
-            "shippingCosts": "Shipping costs",
-            "descriptionHelpText": "Description help text",
-            "close": "Close",
-            "labelComment": "Label comment",
-            "columns": {
-                "reference": "Reference",
-                "product": "Product",
-                "quantity": "Quantity",
-                "price": "Price"
-            }
-        },
         "settings": {
             "save": "Save",
             "titleSuccess": "Success",
@@ -80,72 +28,47 @@
         },
         "paymentDetails": {
             "history": {
-                "cardTitle": "Payment History",
+                "cardTitle": "Lunar Payment History",
                 "column": {
                     "type": "Type",
-                    "amount": "Amount",
+                    "transactionId": "Transaction ID",
+                    "currencyCode": "Currency",
+                    "orderAmount": "Order Amount",
+                    "transactionAmount": "Transaction Amount",
                     "date": "Date"
                 },
                 "type": {
-                    "authorization": "Authorized",
-                    "charge": "Charging",
-                    "shipment": "Shipping notification",
-                    "cancellation": "Refund",
+                    "authorize": "Authorize",
+                    "capture": "Capture",
+                    "refund": "Refund",
+                    "void": "Void (Cancel)",
                     "default": ""
                 }
             },
             "actions": {
-                "reason": {
-                    "placeholder": "reason",
-                    "cancel": "cancel",
-                    "credit": "credit",
-                    "return": "return"
-                },
-                "chargeButton": "Charge",
-                "shipButton": "Shipping notice",
+                "captureButton": "Capture",
                 "refundButton": "Refund",
-                "defaultButton": "Done"
-            },
-            "detail": {
-                "cardTitle": "Payment Details",
-                "shortId": "Short-ID",
-                "id": "Payment-ID",
-                "state": "State",
-                "amountRemaining": "Amount (Remaining)",
-                "amountCancelled": "Amount (Cancelled)",
-                "amountCharged": "Amount (Charged)"
-            },
-            "metadata": {
-                "cardTitle": "Metadata",
-                "column": {
-                    "key": "Key",
-                    "value": "Value"
-                }
-            },
-            "basket": {
-                "cardTitle": "Basket",
-                "column":{
-                    "quantity": "Quantity",
-                    "title": "Title",
-                    "amountGross": "Amount (gross)",
-                    "amountNet": "Amount (net)"
-                }
+                "voidButton": "Void (Cancel)",
+                "defaultButton": "Order is complete"
             },
             "notifications": {
                 "genericErrorMessage": "An error has occurred!",
+
+                "captureSuccessTitle": "Capture",
+                "captureSuccessMessage": "The capture of the payment was successful.",
+                "captureErrorTitle": "Capture",
+
                 "refundSuccessTitle": "Refund",
-                "refundSuccessMessage": "The reimbursement was successfully completed.",
+                "refundSuccessMessage": "The refund was successfully completed.",
                 "refundErrorTitle": "Refund",
-                "chargeSuccessTitle": "Charge",
-                "chargeSuccessMessage": "The collection of the payment was carried out successfully.",
-                "chargeErrorTitle": "Charge",
-                "shipSuccessTitle": "Shipping notice",
-                "shipSuccessMessage": "The shipping notification was successfully sent.",
-                "shipErrorTitle": "Shipping notice",
-                "invoiceNotFoundMessage": "No invoice was found for this order.",
+
+                "voidSuccessTitle": "Void",
+                "voidSuccessMessage": "Void (cancelation) of the payment was successful.",
+                "voidErrorTitle": "Void",
+
                 "couldNotRetrieveMessage": "The payment details could not be retrieved, please check the log files for more information.",
-                "documentDateMissingError": "Document date for invoice is empty.",
-                "paymentMissingError": "Payment could not be found"
+                "paymentMissingError": "Payment could not be found",
+                "orderHaveOtherPayments": "Order have payments processed by other providers"
             }
         },
         "order-list": {

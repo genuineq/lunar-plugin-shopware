@@ -7,9 +7,9 @@ class LunarPaymentService extends ApiService {
         this.apiRoute = `_action/${this.getApiBasePath()}`;
     }
 
-    fetchPaymentDetails(orderTransactionId) {
+    fetchLunarTransactions(orderId) {
         return this.httpClient.post(
-            this.apiRoute + '/fetch-transaction/' + orderTransactionId,
+            this.apiRoute + `/${orderId}/fetch-transactions`,
             {
                 headers: this.getBasicHeaders()
             }
@@ -20,7 +20,7 @@ class LunarPaymentService extends ApiService {
 
     capturePayment(lunarTransactionId) {
         return this.httpClient.post(
-            this.apiRoute + '/capture/' + lunarTransactionId,
+            this.apiRoute + `${lunarTransactionId}/capture`,
             {
                 headers: this.getBasicHeaders()
             }
@@ -31,7 +31,7 @@ class LunarPaymentService extends ApiService {
 
     refundPayment(lunarTransactionId) {
         return this.httpClient.post(
-            this.apiRoute + '/refund/' + lunarTransactionId,
+            this.apiRoute + `${lunarTransactionId}/refund`,
             {
                 headers: this.getBasicHeaders()
             }
@@ -42,7 +42,7 @@ class LunarPaymentService extends ApiService {
 
     voidPayment(lunarTransactionId) {
         return this.httpClient.post(
-            this.apiRoute + '/void/' + lunarTransactionId,
+            this.apiRoute + `${lunarTransactionId}/void`,
             {
                 headers: this.getBasicHeaders()
             }

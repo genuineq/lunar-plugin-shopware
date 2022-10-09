@@ -1,93 +1,68 @@
-import template from './lunar-payment-actions.html.twig';
-import './lunar-payment-actions.scss';
+import template from "./lunar-payment-actions.html.twig";
+import "./lunar-payment-actions.scss";
 
 const { Component, Mixin } = Shopware;
-const reasonCodes = {
-    CANCEL: 'CANCEL',
-    RETURN: 'RETURN',
-    CREDIT: 'CREDIT',
-}
 
-Component.register('lunar-payment-actions', {
+Component.register("lunar-payment-actions", {
     template,
 
-    inject: ['LunarPaymentService'],
+    inject: ["LunarPaymentService"],
 
-    mixins: [
-        Mixin.getByName('notification')
-    ],
+    mixins: [Mixin.getByName("notification")],
 
     data() {
         return {
             isLoading: false,
             isSuccessful: false,
-            transactionAmount: 0.00,
-            reasonCode: null
+            transactionAmount: 0.0,
         };
     },
 
     props: {
-        transactionResource: {
+        lunarTransaction: {
             type: Object,
             required: true
         },
 
-        paymentResource: {
-            type: Object,
-            required: true
-        },
-
-        decimalPrecision: {
+        maxDigits: {
             type: Number,
-            required: true,
-            default: 4
+            required: false,
+            default: 2
         }
     },
 
     computed: {
-        isChargePossible: function () {
-            return this.transactionResource.type === 'authorization';
+        isCapturePossible: function () {
+            return true;
+            // return this.lunarTransaction.transactionType === 'authorize';
         },
 
         isRefundPossible: function () {
-            return this.transactionResource.type === 'charge';
+            return true;
+            // return this.lunarTransaction.transactionType === 'capture';
+        },
+
+        isVoidPossible: function () {
+            return true;
+            // return this.lunarTransaction.transactionType === 'authorize';
         },
 
         maxTransactionAmount() {
             let amount = 0;
 
             if (this.isRefundPossible) {
-                amount = this.transactionResource.amount;
+                amount = this.lunarTransaction.orderAmount;
             }
 
-            if (this.isChargePossible) {
+            if (this.isCapturePossible) {
                 amount = this.paymentResource.amount.remaining;
             }
 
-            if (this.transactionResource.remainingAmount) {
-                amount = this.transactionResource.remainingAmount;
-            }
 
             return amount / (10 ** this.paymentResource.amount.decimalPrecision);
+
+            return 12000;
         },
-
-
-        reasonCodeSelection() {
-            return [
-                {
-                    label: this.$tc('lunar-payment.paymentDetails.actions.reason.cancel'),
-                    value: reasonCodes.CANCEL,
-                },
-                {
-                    label: this.$tc('lunar-payment.paymentDetails.actions.reason.credit'),
-                    value: reasonCodes.CREDIT,
-                },
-                {
-                    label: this.$tc('lunar-payment.paymentDetails.actions.reason.return'),
-                    value: reasonCodes.RETURN,
-                }
-            ];
-        }
     },
 
     created() {
@@ -95,69 +70,103 @@ Component.register('lunar-payment-actions', {
     },
 
     methods: {
-        charge() {
+        capture() {
             this.isLoading = true;
 
-            this.LunarPaymentService.chargeTransaction(
-                this.paymentResource.orderId,
-                this.transactionResource.id,
+            this.LunarPaymentService.capturePayment(
+                this.lunarTransaction.orderId,
                 this.transactionAmount
-            ).then(() => {
-                this.createNotificationSuccess({
-                    title: this.$tc('lunar-payment.paymentDetails.notifications.chargeSuccessTitle'),
-                    message: this.$tc('lunar-payment.paymentDetails.notifications.chargeSuccessMessage')
+            )
+                .then(() => {
+                    this.createNotificationSuccess({
+                        title: this.$tc("lunar-payment.paymentDetails.notifications.captureSuccessTitle"),
+                        message: this.$tc("lunar-payment.paymentDetails.notifications.captureSuccessMessage"),
+                    });
+
+                    this.isSuccessful = true;
+
+                    this.$emit("reload");
+                })
+                .catch((errorResponse) => {
+                    let message = errorResponse.response.data.message;
+
+                    if (message === "generic-error") {
+                        message = this.$tc("lunar-payment.paymentDetails.notifications.genericErrorMessage");
+                    }
+
+                    this.createNotificationError({
+                        title: this.$tc("lunar-payment.paymentDetails.notifications.captureErrorTitle"),
+                        message: message,
+                    });
+
+                    this.isLoading = false;
                 });
-
-                this.isSuccessful = true;
-
-                this.$emit('reload');
-            }).catch((errorResponse) => {
-                let message = errorResponse.response.data.message;
-
-                if (message === 'generic-error') {
-                    message = this.$tc('lunar-payment.paymentDetails.notifications.genericErrorMessage');
-                }
-
-                this.createNotificationError({
-                    title: this.$tc('lunar-payment.paymentDetails.notifications.chargeErrorTitle'),
-                    message: message
-                });
-
-                this.isLoading = false;
-            });
         },
 
         refund() {
             this.isLoading = true;
 
-            this.LunarPaymentService.refundTransaction(
-                this.paymentResource.orderId,
-                this.transactionResource.id,
-                this.transactionAmount,
-                this.reasonCode
-            ).then(() => {
-                this.createNotificationSuccess({
-                    title: this.$tc('lunar-payment.paymentDetails.notifications.refundSuccessTitle'),
-                    message: this.$tc('lunar-payment.paymentDetails.notifications.refundSuccessMessage')
+            this.LunarPaymentService.refundPayment(
+                this.lunarTransaction.orderId,
+                this.transactionAmount
+            )
+                .then(() => {
+                    this.createNotificationSuccess({
+                        title: this.$tc("lunar-payment.paymentDetails.notifications.refundSuccessTitle"),
+                        message: this.$tc("lunar-payment.paymentDetails.notifications.refundSuccessMessage"),
+                    });
+
+                    this.isSuccessful = true;
+
+                    this.$emit("reload");
+                })
+                .catch((errorResponse) => {
+                    let message = errorResponse.response.data.message;
+
+                    if (message === "generic-error") {
+                        message = this.$tc("lunar-payment.paymentDetails.notifications.genericErrorMessage");
+                    }
+
+                    this.createNotificationError({
+                        title: this.$tc("lunar-payment.paymentDetails.notifications.refundErrorTitle"),
+                        message: message,
+                    });
+
+                    this.isLoading = false;
                 });
+        },
 
-                this.isSuccessful = true;
+        void() {
+            this.isLoading = true;
 
-                this.$emit('reload');
-            }).catch((errorResponse) => {
-                let message = errorResponse.response.data.message;
+            this.LunarPaymentService.voidPayment(
+                this.lunarTransaction.orderId,
+                this.transactionAmount
+            )
+                .then(() => {
+                    this.createNotificationSuccess({
+                        title: this.$tc("lunar-payment.paymentDetails.notifications.voidSuccessTitle"),
+                        message: this.$tc("lunar-payment.paymentDetails.notifications.voidSuccessMessage"),
+                    });
 
-                if (message === 'generic-error') {
-                    message = this.$tc('lunar-payment.paymentDetails.notifications.genericErrorMessage');
-                }
+                    this.isSuccessful = true;
 
-                this.createNotificationError({
-                    title: this.$tc('lunar-payment.paymentDetails.notifications.refundErrorTitle'),
-                    message: message
+                    this.$emit("reload");
+                })
+                .catch((errorResponse) => {
+                    let message = errorResponse.response.data.message;
+
+                    if (message === "generic-error") {
+                        message = this.$tc("lunar-payment.paymentDetails.notifications.genericErrorMessage");
+                    }
+
+                    this.createNotificationError({
+                        title: this.$tc("lunar-payment.paymentDetails.notifications.voidErrorTitle"),
+                        message: message,
+                    });
+
+                    this.isLoading = false;
                 });
-
-                this.isLoading = false;
-            });
-        }
-    }
+        },
+    },
 });

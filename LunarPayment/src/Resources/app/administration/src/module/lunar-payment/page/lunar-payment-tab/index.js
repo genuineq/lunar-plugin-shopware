@@ -14,7 +14,7 @@ Component.register('lunar-payment-tab', {
 
     data() {
         return {
-            paymentResources: [],
+            lunarTransactions: [],
             isLoading: true
         };
     },
@@ -42,7 +42,7 @@ Component.register('lunar-payment-tab', {
         },
 
         resetDataAttributes() {
-            this.paymentResources = [];
+            this.lunarTransactions = [];
             this.isLoading = true;
         },
 
@@ -64,29 +64,29 @@ Component.register('lunar-payment-tab', {
                 }
 
                 order.transactions.forEach((orderTransaction) => {
-                    if (!orderTransaction.customFields) {
-                        return;
-                    }
-
-                    if (!orderTransaction.customFields.lunar_payment_is_transaction) {
-                        return;
-                    }
-
-                    this.LunarPaymentService.fetchPaymentDetails(orderTransaction.id)
-                        .then((response) => {
-                            this.isLoading = false;
-
-                            this.paymentResources.push(JSON.parse(response.transaction));
-                        })
-                        .catch(() => {
-                            this.createNotificationError({
-                                title: this.$tc('lunar-payment.paymentDetails.notifications.genericErrorMessage'),
-                                message: this.$tc('lunar-payment.paymentDetails.notifications.couldNotRetrieveMessage')
-                            });
-
-                            this.isLoading = false;
+                    if ('1a9bc76a3c244278a51a2e90c1e6f040' !== orderTransaction.paymentMethodId) {
+                        this.createNotificationError({
+                            title: this.$tc('lunar-payment.paymentDetails.notifications.genericErrorMessage'),
+                            message: this.$tc('lunar-payment.paymentDetails.notifications.orderHaveOtherPayments')
                         });
+                        this.isLoading = false;
+                        return;
+                    }
                 });
+
+                this.LunarPaymentService.fetchLunarTransactions(orderId)
+                    .then((response) => {
+                        this.isLoading = false;
+                        this.lunarTransactions.push(response.transactions);
+                    })
+                    .catch(() => {
+                        this.createNotificationError({
+                            title: this.$tc('lunar-payment.paymentDetails.notifications.genericErrorMessage'),
+                            message: this.$tc('lunar-payment.paymentDetails.notifications.couldNotRetrieveMessage')
+                        });
+
+                        this.isLoading = false;
+                    });
             });
         }
     }
