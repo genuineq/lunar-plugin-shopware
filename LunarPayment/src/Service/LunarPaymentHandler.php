@@ -80,6 +80,8 @@ class LunarPaymentHandler implements SynchronousPaymentHandlerInterface
             throw new TransactionException($orderTransactionId, '', null, 'AUTHORIZATION_ERROR');
         }
 
+        $amountInMinor = (int) CurrencyHelper::getAmountInMinor($orderCurrency, $transactionAmount);
+
         $transactionData = [
             [
                 'orderId' => $orderId,
@@ -88,6 +90,7 @@ class LunarPaymentHandler implements SynchronousPaymentHandlerInterface
                 'transactionCurrency' => $orderCurrency,
                 'orderAmount' => $transactionAmount,
                 'transactionAmount' => $transactionAmount,
+                'amountInMinor' => $amountInMinor,
                 'createdAt' => date(Defaults::STORAGE_DATE_TIME_FORMAT),
             ],
         ];

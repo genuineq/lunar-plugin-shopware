@@ -24,6 +24,8 @@ class PluginTransaction extends Entity
 
     protected float $transactionAmount;
 
+    protected int $amountInMinor;
+
     /**
      * Get/Set orderId
      */
@@ -94,5 +96,17 @@ class PluginTransaction extends Entity
     public function setTransactionAmount($transactionAmount): void
     {
         $this->transactionAmount = $transactionAmount;
+    }
+
+    /**
+     * Get/Set amountInMinor
+     */
+    public function getAmountInMinort(): float
+    {
+        return $this->amountInMinor;
+    }
+    public function setAmountInMinor($amountInMinor): void
+    {
+        $this->amountInMinor = $amountInMinor;
     }
 }

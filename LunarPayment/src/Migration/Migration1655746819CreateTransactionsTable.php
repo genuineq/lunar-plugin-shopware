@@ -32,6 +32,7 @@ class Migration1655746819CreateTransactionsTable extends MigrationStep
                 `transaction_currency` CHAR(5) NOT NULL,
                 `order_amount` DECIMAL(15,4) NOT NULL,
                 `transaction_amount` DECIMAL(15,4) NOT NULL,
+                `amount_in_minor` INT UNSIGNED NOT NULL,
                 `created_at` DATETIME(3) NOT NULL,
                 `updated_at` DATETIME(3) NULL
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -40,7 +40,7 @@ Component.register('lunar-payment-history', {
                 /** Set last transaction type & amount. */
                 if (index == (self.lunarTransactions.length - 1)) {
                     self.lastTransactionType = lunarTransaction.transactionType;
-                    self.transactionAmount = lunarTransaction.transactionAmount; // TODO need to be processed
+                    self.transactionAmount = lunarTransaction.amountInMinor;
                     self.lunarTransactionId = lunarTransaction.transactionId;
                     self.transactionCurrency = lunarTransaction.transactionCurrency;
                 }
@@ -48,14 +48,14 @@ Component.register('lunar-payment-history', {
                 let createdAt = lunarTransaction.createdAt.split(/[T.]/);
 
                 data.push({
-                    index: index + 1,
+                    id: index + 1,
                     type: lunarTransaction.transactionType,
                     transactionId: lunarTransaction.transactionId,
                     currencyCode: lunarTransaction.transactionCurrency,
                     orderAmount: lunarTransaction.orderAmount,
                     transactionAmount: lunarTransaction.transactionAmount,
                     date: createdAt[0] + ' ' + createdAt[1],
-                    resource: lunarTransaction
+                    // resource: lunarTransaction
                 });
             });
 
@@ -65,7 +65,7 @@ Component.register('lunar-payment-history', {
         columns() {
             return [
                 {
-                    property: 'index',
+                    property: 'id',
                     label: '#',
                     rawData: true
                 },
@@ -104,8 +104,6 @@ Component.register('lunar-payment-history', {
     },
 
     methods: {
-
-
         transactionTypeRenderer(value) {
             switch (value) {
                 case 'authorize':

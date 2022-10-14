@@ -5,13 +5,14 @@ class LunarPaymentService extends ApiService {
     constructor(httpClient, loginService, apiEndpoint = 'lunar_payment') {
         super(httpClient, loginService, apiEndpoint);
         this.apiRoute = `_action/${this.getApiBasePath()}`;
+        this.basicHeaders = this.getBasicHeaders();
     }
 
     fetchLunarTransactions(orderId) {
         return this.httpClient.post(
             this.apiRoute + `/${orderId}/fetch-transactions`,
             {
-                headers: this.getBasicHeaders()
+                headers: this.basicHeaders
             }
         ).then((response) => {
             return ApiService.handleResponse(response);
@@ -20,9 +21,9 @@ class LunarPaymentService extends ApiService {
 
     capturePayment(lunarTransactionId) {
         return this.httpClient.post(
-            this.apiRoute + `${lunarTransactionId}/capture`,
+            this.apiRoute + `/${lunarTransactionId}/capture`,
             {
-                headers: this.getBasicHeaders()
+                headers: this.basicHeaders
             }
         ).then((response) => {
             return ApiService.handleResponse(response);
@@ -31,9 +32,9 @@ class LunarPaymentService extends ApiService {
 
     refundPayment(lunarTransactionId) {
         return this.httpClient.post(
-            this.apiRoute + `${lunarTransactionId}/refund`,
+            this.apiRoute + `/${lunarTransactionId}/refund`,
             {
-                headers: this.getBasicHeaders()
+                headers: this.basicHeaders
             }
         ).then((response) => {
             return ApiService.handleResponse(response);
@@ -42,9 +43,9 @@ class LunarPaymentService extends ApiService {
 
     voidPayment(lunarTransactionId) {
         return this.httpClient.post(
-            this.apiRoute + `${lunarTransactionId}/void`,
+            this.apiRoute + `/${lunarTransactionId}/void`,
             {
-                headers: this.getBasicHeaders()
+                headers: this.basicHeaders
             }
         ).then((response) => {
             return ApiService.handleResponse(response);

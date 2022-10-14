@@ -152,5 +152,9 @@ Component.register("lunar-payment-actions", {
                     this.isLoading = false;
                 });
         },
+    
+        reloadPaymentDetails() {
+            this.$emit('reload');
+        },
     },
 });

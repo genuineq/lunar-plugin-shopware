@@ -75,14 +75,27 @@ class OrderTransactionController extends AbstractController
     {
         $errors = [];
 
+        try {
+            /**
+             * Check transaction registered in custom table
+             */
+            $criteria = new Criteria();
+            $criteria->addFilter(new EqualsFilter('orderId', $orderId));
+            // $criteria->addFilter(new EqualsFilter('transactionType',  OrderHelper::AUTHORIZE_STATUS));
 
-        /**
-         * Check transaction registered in custom table
-         */
-        $criteria = new Criteria();
-        $criteria->addFilter(new EqualsFilter('orderId', $orderId));
+            $lunarTransactions = $this->lunarTransactionRepository->search($criteria, $context);
+        } catch (\Exception $e) {
+            $errors[] = $e->getMessage();
+        }
 
-        $lunarTransactions = $this->lunarTransactionRepository->search($criteria, $context);
+        if (!empty($errors)) {
+            return new JsonResponse([
+                'status'  =>  empty($errors),
+                'message' => 'Error',
+                'code'    => 0,
+                'errors'  => $errors,
+            ], 404);
+        }
 
         return new JsonResponse([
             'status'  =>  empty($errors),
