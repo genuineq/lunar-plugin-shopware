@@ -14,59 +14,40 @@ Component.register("lunar-payment-actions", {
         return {
             isLoading: false,
             isSuccessful: false,
-            transactionAmount: 0.0,
         };
     },
 
     props: {
-        lunarTransaction: {
-            type: Object,
+        transactionAmount:{
+            type: Number,
             required: true
         },
-
-        maxDigits: {
-            type: Number,
-            required: false,
-            default: 2
+        lunarTransactionId: {
+            type: String,
+            required: true
+        },
+        transactionCurrency: {
+            type: String,
+            required: true
+        },
+        lastTransactionType: {
+            type: String,
+            required: true
         }
     },
 
     computed: {
-        isCapturePossible: function () {
-            return true;
-            // return this.lunarTransaction.transactionType === 'authorize';
+        isCapturePossible() {
+            return 'authorize' === this.lastTransactionType;
         },
 
-        isRefundPossible: function () {
-            return true;
-            // return this.lunarTransaction.transactionType === 'capture';
+        isRefundPossible() {
+            return 'capture' === this.lastTransactionType;
         },
 
-        isVoidPossible: function () {
-            return true;
-            // return this.lunarTransaction.transactionType === 'authorize';
+        isVoidPossible() {
+            return 'authorize' === this.lastTransactionType;
         },
-
-        maxTransactionAmount() {
-            let amount = 0;
-
-            if (this.isRefundPossible) {
-                amount = this.lunarTransaction.orderAmount;
-            }
-
-            if (this.isCapturePossible) {
-                amount = this.paymentResource.amount.remaining;
-            }
-
-
-            return amount / (10 ** this.paymentResource.amount.decimalPrecision);
-
-            return 12000;
-        },
-    },
-
-    created() {
-        this.transactionAmount = this.maxTransactionAmount;
     },
 
     methods: {
@@ -74,8 +55,9 @@ Component.register("lunar-payment-actions", {
             this.isLoading = true;
 
             this.LunarPaymentService.capturePayment(
-                this.lunarTransaction.orderId,
-                this.transactionAmount
+                this.lunarTransactionId,
+                this.transactionAmount,
+                this.transactionCurrency,
             )
                 .then(() => {
                     this.createNotificationSuccess({
@@ -107,8 +89,9 @@ Component.register("lunar-payment-actions", {
             this.isLoading = true;
 
             this.LunarPaymentService.refundPayment(
-                this.lunarTransaction.orderId,
-                this.transactionAmount
+                this.lunarTransactionId,
+                this.transactionAmount,
+                this.transactionCurrency,
             )
                 .then(() => {
                     this.createNotificationSuccess({
@@ -135,13 +118,14 @@ Component.register("lunar-payment-actions", {
                     this.isLoading = false;
                 });
         },
-
-        void() {
+        // simple name "void" just not work
+        voidPayment() {
             this.isLoading = true;
 
             this.LunarPaymentService.voidPayment(
-                this.lunarTransaction.orderId,
-                this.transactionAmount
+                this.lunarTransactionId,
+                this.transactionAmount,
+                this.transactionCurrency,
             )
                 .then(() => {
                     this.createNotificationSuccess({

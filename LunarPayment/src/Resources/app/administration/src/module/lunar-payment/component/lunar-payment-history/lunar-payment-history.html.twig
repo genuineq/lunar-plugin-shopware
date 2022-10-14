@@ -1,52 +1,20 @@
 {% block lunar_payment_history %}
-    {# <sw-card :title="$tc('lunar-payment.paymentDetails.history.cardTitle')"> #}
     <sw-card>
 
         <div id="history-table-header">
             <span id="history-table-title">
                 {{$tc("lunar-payment.paymentDetails.history.cardTitle")}}
             </span>
-            <sw-button-group id="lunar-payment-actions">
-                <sw-button-process
-                    id="captureButton"
-                    v-if="isCapturePossible"
-                    :disabled="false"
-                    :isLoading="isLoading"
-                    :processSuccess="isSuccessful"
-                    @click="reloadPaymentDetails"
+            {% block lunar_payment_history_actions %}
+                <lunar-payment-actions
+                    :transactionAmount="transactionAmount"
+                    :lunarTransactionId="lunarTransactionId"
+                    :transactionCurrency="transactionCurrency"
+                    :lastTransactionType="lastTransactionType"
+                    @reload="reloadPaymentDetails"
                 >
-                    {{ $tc("lunar-payment.paymentDetails.actions.captureButton") }}
-                </sw-button-process>
-
-                <sw-button-process
-                    id="refundButton"
-                    v-if="isRefundPossible"
-                    :disabled="false"
-                    :isLoading="isLoading"
-                    :processSuccess="isSuccessful"
-                    @click="reloadPaymentDetails"
-                >
-                    {{ $tc("lunar-payment.paymentDetails.actions.refundButton") }}
-                </sw-button-process>
-
-                <sw-button-process
-                    id="voidButton"
-                    v-if="isVoidPossible"
-                    :disabled="false"
-                    :isLoading="isLoading"
-                    :processSuccess="isSuccessful"
-                    @click="reloadPaymentDetails"
-                >
-                    {{ $tc("lunar-payment.paymentDetails.actions.voidButton") }}
-                </sw-button-process>
-
-                <sw-button
-                    id="orderCompleteButton"
-                    v-if="!isCapturePossible && !isRefundPossible && !isVoidPossible"
-                    :disabled="true">
-                    {{ $tc("lunar-payment.paymentDetails.actions.defaultButton") }}
-                </sw-button>
-            </sw-button-group>
+                </lunar-payment-actions>
+            {% endblock %}
         </div>
 
         <hr>

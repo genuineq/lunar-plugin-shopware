@@ -6,7 +6,7 @@ import enGB from '../../snippet/en_GB.json';
 /**
  * component
  */
-
+import './component/lunar-payment-actions';
 import './component/lunar-payment-history';
 
 /**
