@@ -70,6 +70,15 @@ class OrderTransactionController extends AbstractController
     }
 
     /**
+     * TODO here & Lunar payment Handler
+     * Solve refund problem at transaction state transition (refund is successful right now)
+     * After authorization, change Order status to In progress
+     * After capture, leave same status
+     * After refund, change to Done
+     * After void, change to Cancelled
+     */
+
+    /**
      * CAPTURE
      *
      * @Route("/api/_action/lunar_payment/capture", name="api.action.lunar_payment.capture", methods={"POST"})
@@ -123,13 +132,13 @@ class OrderTransactionController extends AbstractController
             case OrderHelper::REFUND_STATUS:
                 $lunarTransactionState = OrderHelper::CAPTURE_STATUS;
                 $orderTransactionStateToCheck = OrderHelper::TRANSACTION_PAID;
-                $orderTransactionAction = OrderHelper::TRANSACTION_REFUNDED;
+                $orderTransactionAction = OrderHelper::TRANSACTION_REFUND;
                 $amountToCheck = 'capturedAmount';
                 break;
             case OrderHelper::VOID_STATUS:
                 $lunarTransactionState = OrderHelper::AUTHORIZE_STATUS;
                 $orderTransactionStateToCheck = OrderHelper::TRANSACTION_AUTHORIZED;
-                $orderTransactionAction = OrderHelper::TRANSACTION_VOIDED;
+                $orderTransactionAction = OrderHelper::TRANSACTION_VOID;
                 $amountToCheck = 'pendingAmount';
                 break;
         }
@@ -145,10 +154,7 @@ class OrderTransactionController extends AbstractController
 
         try {
             $order = $this->orderHelper->getOrderById($orderId, $context);
-file_put_contents("/app/var/log/zzz.log", json_encode($order->transactions), FILE_APPEND);
-file_put_contents("/app/var/log/zzz.log", PHP_EOL, FILE_APPEND);
-file_put_contents("/app/var/log/zzz.log", PHP_EOL, FILE_APPEND);
-file_put_contents("/app/var/log/zzz.log", json_encode($order->transactions->first()), FILE_APPEND);
+
             $lastOrderTransaction = $order->transactions->last();
 
             $transactionStateName = $lastOrderTransaction->getStateMachineState()->technicalName;
@@ -167,8 +173,7 @@ file_put_contents("/app/var/log/zzz.log", json_encode($order->transactions->firs
                     'status'  => false,
                     'message' => 'Error',
                     'code'    => 0,
-                    // 'errors'=> ['not_lunar_transaction' => 'Capture failed. Not lunar transaction or payment not ' . $orderTransactionStateToCheck],
-                    'errors'=> [$actionType . ' failed. Not lunar transaction or payment not ' . $orderTransactionStateToCheck, 'fsfsfsf', 'ppppppppp'],
+                    'errors'=> [$actionType . ' failed. Not lunar transaction or payment not ' . $orderTransactionStateToCheck],
                 ], 400);
             }
 
@@ -187,7 +192,6 @@ file_put_contents("/app/var/log/zzz.log", json_encode($order->transactions->firs
                     'status'  => false,
                     'message' => 'Error',
                     'code'    => 0,
-                    // 'errors'=> ['fetch_transaction_failed' => 'Fetch transaction failed'],
                     'errors'=> ['Fetch transaction failed'],
                 ], 400);
             }
@@ -197,16 +201,13 @@ file_put_contents("/app/var/log/zzz.log", json_encode($order->transactions->firs
             $amountInMinor = (int) CurrencyHelper::getAmountInMinor($currencyCode, $totalPrice);
 
             if ($fetchedTransaction['amount'] !== $amountInMinor) {
-                // $errors['amount_mismatch'] = 'Fetch transaction failed: amount mismatch';
                 $errors[] = 'Fetch transaction failed: amount mismatch';
             }
             if ($fetchedTransaction['currency'] !== $currencyCode) {
-                // $errors['currency_mismatch'] = 'Fetch transaction failed: currency mismatch';
                 $errors[] = 'Fetch transaction failed: currency mismatch';
             }
 
             if ($fetchedTransaction[$amountToCheck] !== $amountInMinor) {
-                // $errors['pending_amount_mismatch'] = 'Fetch transaction failed: currency mismatch';
                 $errors[] = 'Fetch transaction failed: ' . $amountToCheck . ' mismatch';
             }
 
@@ -216,19 +217,18 @@ file_put_contents("/app/var/log/zzz.log", json_encode($order->transactions->firs
             ];
 
             $result['successful'] = false;
-            $result = $apiClient->transactions()->capture($lunarTransactionId, $transactionData);
+            $result = $apiClient->transactions()->{$actionType}($lunarTransactionId, $transactionData);
 
             $this->logger->writeLog([$actionTypeAllCaps . ' request data: ', $transactionData]);
 
 
             if (true !== $result['successful']) {
                 $this->logger->writeLog([$actionTypeAllCaps . ' error (admin): ', $result]);
-                // $errors['capture_failed'] = 'Capture transaction api action failed';
                 $errors[] = $actionType . ' transaction api action failed';
             }
 
 
-            $transactionAmount = CurrencyHelper::getAmountInMajor($currencyCode, $result['capturedAmount']);
+            $transactionAmount = CurrencyHelper::getAmountInMajor($currencyCode, $result[$amountToCheck]);
 
             $transactionData = [
                 [
@@ -254,9 +254,10 @@ file_put_contents("/app/var/log/zzz.log", json_encode($order->transactions->firs
             $this->logger->writeLog(['Succes: ', $transactionData[0]]);
 
         } catch (\Exception $e) {
-            // $errors['exception_error'] = 'An exception occured. Please try again. If this persist please contact plugin developer.';
             $errors[] = 'An exception occured. Please try again. If this persist please contact plugin developer.';
             $this->logger->writeLog(['EXCEPTION ' . $actionType . ' (admin): ', $e->getMessage()]);
+
+            /** Fail order transaction. */
             $this->transactionStateHandler->fail($lastOrderTransaction->id, $context);
         }
 

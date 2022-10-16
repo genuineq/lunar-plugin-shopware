@@ -69,16 +69,14 @@ Component.register("lunar-payment-actions", {
                     this.$emit("reload");
                 })
                 .catch((errorResponse) => {
-                    let message = errorResponse.response.data.message;
+                    let errors = errorResponse.response.data.errors;
 
-                    if (message === "generic-error") {
-                        message = this.$tc("lunar-payment.paymentDetails.notifications.genericErrorMessage");
-                    }
-
-                    this.createNotificationError({
-                        title: this.$tc("lunar-payment.paymentDetails.notifications.captureErrorTitle"),
-                        message: message,
-                    });
+                    errors.forEach((errorMessage) => {
+                        this.createNotificationError({
+                            title: this.$tc("lunar-payment.paymentDetails.notifications.captureErrorTitle"),
+                            message: errorMessage,
+                        });
+                    })
 
                     this.isLoading = false;
                 });
@@ -99,16 +97,15 @@ Component.register("lunar-payment-actions", {
                     this.$emit("reload");
                 })
                 .catch((errorResponse) => {
-                    let message = errorResponse.response.data.message;
+                    let errors = errorResponse.response.data.errors;
 
-                    if (message === "generic-error") {
-                        message = this.$tc("lunar-payment.paymentDetails.notifications.genericErrorMessage");
-                    }
+                    errors.forEach((errorMessage) => {
+                        this.createNotificationError({
+                            title: this.$tc("lunar-payment.paymentDetails.notifications.refundErrorTitle"),
+                            message: errorMessage,
+                        });
+                    })
 
-                    this.createNotificationError({
-                        title: this.$tc("lunar-payment.paymentDetails.notifications.refundErrorTitle"),
-                        message: message,
-                    });
 
                     this.isLoading = false;
                 });
@@ -129,16 +126,15 @@ Component.register("lunar-payment-actions", {
                     this.$emit("reload");
                 })
                 .catch((errorResponse) => {
-                    let message = errorResponse.response.data.message;
+                    let errors = errorResponse.response.data.errors;
 
-                    if (message === "generic-error") {
-                        message = this.$tc("lunar-payment.paymentDetails.notifications.genericErrorMessage");
-                    }
+                    errors.forEach((errorMessage) => {
+                        this.createNotificationError({
+                            title: this.$tc("lunar-payment.paymentDetails.notifications.voidErrorTitle"),
+                            message: errorMessage,
+                        });
+                    })
 
-                    this.createNotificationError({
-                        title: this.$tc("lunar-payment.paymentDetails.notifications.voidErrorTitle"),
-                        message: message,
-                    });
 
                     this.isLoading = false;
                 });

@@ -12,12 +12,13 @@ Released under the GPL V3 license: https://opensource.org/licenses/GPL-3.0
 ## Automatic installation
 
 Once you have installed Shopware, follow these simple steps:
-  1. Signup at [lunar.app](https://www.lunar.app) (it’s free);
+  1. Sign up at [lunar.app](https://www.lunar.app) (it’s free);
   1. Create an account;
   1. Create app/public keys pair for your Shopware website;
   1. Upload the plugin archive trough the `/admin#/sw/extension/my-extensions/listing` page (`Upload extension` button) or follow the steps from `Manual installation` section bellow.
-  1. The plugin will be active by default;
-  1. Insert the app key and your public key in the plugin config for the Lunar plugin (`/admin#/sw/extension/config/LunarPayment`).
+  1. Activate the plugin from `/admin#/sw/extension/my-extensions/listing` page;
+  1. Insert your app and public keys in the plugin settings (`<DOMAIN_URL>/admin#/lunar/payment/settings/index`).
+  1. Change other settings according to your needs.
 
 
 ## Manual installation
@@ -31,18 +32,22 @@ Once you have installed Shopware, follow these simple steps:
   1. Run the following commands from the Shopware root directory:
 
             bin/console plugin:refresh
-            bin/console plugin:install LunarPayment
+            bin/console plugin:install --activate LunarPayment
             bin/console cache:clear
 
   1. Open the Shopware Admin panel;
   1. The plugin should now be auto installed and visible under `/admin#/sw/extension/my-extensions/listing` page;
-  1. Insert the app key and your public key in the plugin config for the Lunar plugin.
+  1. Insert the app key and your public key in the plugin settings (`<DOMAIN_URL>/admin#/lunar/payment/settings/index`).
+  1. Change other settings according to your needs.
 
 
 ## Updating settings
 
-Under the Shopware Lunar payment method config, you can:
+Under the Shopware Lunar payment method config (`/admin#/sw/extension/my-extensions/listing`), you can:
   * Activate/deactivate the plugin
+  * Uninstall the plugin
+
+Under the Shopware Lunar payment method settings (`/admin#/lunar/payment/settings/index`), you can:
   * Activate/deactivate the payment method from plugin
   * Update the payment method name & description in the payment methods settings
   * Update the title & description that shows up in the payment popup
@@ -55,11 +60,11 @@ Under the Shopware Lunar payment method config, you can:
 
   1. Capture
       * In Instant mode, the orders are captured automatically
-      * In delayed mode you can capture an order changing the Payment Status of an order to `Paid`
+      * In delayed mode you can press `Capture` button from Order details page, Lunar Payment tab.
   2. Refund
-      * To refund an order you can change the Payment Status of an order to `Refunded`
+      * To refund an order you can press `Refund` button from Order details page, Lunar Payment tab
   3. Void
-      * To void an order you can change the Payment Status of an order to `Cancelled`
+      * To void an order you can press `Void (cancel)` button from Order details page, Lunar Payment tab
 
   ## Available features
 

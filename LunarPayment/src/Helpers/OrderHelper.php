@@ -22,7 +22,9 @@ class OrderHelper
      */
     public const TRANSACTION_AUTHORIZED = OrderTransactionStates::STATE_AUTHORIZED;
     public const TRANSACTION_PAID = OrderTransactionStates::STATE_PAID;
+    public const TRANSACTION_REFUND = 'refund';
     public const TRANSACTION_REFUNDED = OrderTransactionStates::STATE_REFUNDED;
+    public const TRANSACTION_VOID = 'cancel';
     public const TRANSACTION_VOIDED = OrderTransactionStates::STATE_CANCELLED;
     public const TRANSACTION_FAILED = OrderTransactionStates::STATE_FAILED;
 

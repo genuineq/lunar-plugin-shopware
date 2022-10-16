@@ -54,17 +54,17 @@
             "notifications": {
                 "genericErrorMessage": "An error has occurred!",
 
-                "captureSuccessTitle": "Capture",
+                "captureSuccessTitle": "Capture success!",
                 "captureSuccessMessage": "The capture of the payment was successful.",
-                "captureErrorTitle": "Capture",
+                "captureErrorTitle": "Capture Error!",
 
-                "refundSuccessTitle": "Refund",
+                "refundSuccessTitle": "Refund success!",
                 "refundSuccessMessage": "The refund was successfully completed.",
-                "refundErrorTitle": "Refund",
+                "refundErrorTitle": "Refund Error!",
 
-                "voidSuccessTitle": "Void",
+                "voidSuccessTitle": "Void (cancel) success!",
                 "voidSuccessMessage": "Void (cancelation) of the payment was successful.",
-                "voidErrorTitle": "Void",
+                "voidErrorTitle": "Void (cancel) Error!",
 
                 "couldNotRetrieveMessage": "The payment details could not be retrieved, please check the log files for more information.",
                 "paymentMissingError": "Payment could not be found",
