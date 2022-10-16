@@ -38,7 +38,7 @@ Shopware.Module.register('lunar-payment', {
         if (currentRoute.name === 'sw.order.detail') {
             currentRoute.children.push({
                 component: 'lunar-payment-tab',
-                name: 'lunar-payment.payment.detail',
+                name: 'lunar-payment.payment-history',
                 path: '/sw/order/detail/:id/lunar-payment',
                 isChildren: true,
                 meta: {

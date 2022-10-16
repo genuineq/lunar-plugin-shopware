@@ -4,7 +4,7 @@
     {% block lunar_payment_payment_tab %}
         <sw-tabs-item
             v-if="isLunarPayment"
-            :route="{ name: 'lunar-payment.payment.detail', params: { orderId: $route.params.id } }"
+            :route="{ name: 'lunar-payment.payment-history', params: { orderId: $route.params.id } }"
             :title="$tc('lunar-payment.title')">
             {{ $tc('lunar-payment.title') }}
         </sw-tabs-item>

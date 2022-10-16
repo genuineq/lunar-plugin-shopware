@@ -19,10 +19,11 @@ class LunarPaymentService extends ApiService {
         });
     }
 
-    capturePayment(lunarTransactionId) {
+    capturePayment(params) {
         return this.httpClient.post(
-            this.apiRoute + `/${lunarTransactionId}/capture`,
+            this.apiRoute + `/capture`,
             {
+                params: params,
                 headers: this.basicHeaders
             }
         ).then((response) => {
@@ -30,10 +31,11 @@ class LunarPaymentService extends ApiService {
         });
     }
 
-    refundPayment(lunarTransactionId) {
+    refundPayment(params) {
         return this.httpClient.post(
-            this.apiRoute + `/${lunarTransactionId}/refund`,
+            this.apiRoute + `/refund`,
             {
+                params: params,
                 headers: this.basicHeaders
             }
         ).then((response) => {
@@ -41,10 +43,11 @@ class LunarPaymentService extends ApiService {
         });
     }
 
-    voidPayment(lunarTransactionId) {
+    voidPayment(params) {
         return this.httpClient.post(
-            this.apiRoute + `/${lunarTransactionId}/void`,
+            this.apiRoute + `/void`,
             {
+                params: params,
                 headers: this.basicHeaders
             }
         ).then((response) => {

@@ -9,6 +9,7 @@
                     {% block lunar_payment_payment_details_content_payment_history %}
                         <lunar-payment-history
                             :lunarTransactions="lunarTransactions"
+                            :orderId="this.$route.params.id"
                             @reload="reloadPaymentDetails">
                         </lunar-payment-history>
                     {% endblock %}

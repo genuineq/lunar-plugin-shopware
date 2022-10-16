@@ -7,7 +7,7 @@
             :disabled="false"
             :isLoading="isLoading"
             :processSuccess="isSuccessful"
-            @click="capture"
+            @click="capturePayment"
         >
             {{ $tc("lunar-payment.paymentDetails.actions.captureButton") }}
         </sw-button-process>
@@ -18,7 +18,7 @@
             :disabled="false"
             :isLoading="isLoading"
             :processSuccess="isSuccessful"
-            @click="refund"
+            @click="refundPayment"
         >
             {{ $tc("lunar-payment.paymentDetails.actions.refundButton") }}
         </sw-button-process>
@@ -36,7 +36,7 @@
 
         <sw-button
             id="orderCompleteButton"
-            v-if="!isCapturePossible && !isRefundPossible && !isVoidPossible"
+            v-if="!isCapturePossible && !isRefundPossible"
             :disabled="true">
             {{ $tc("lunar-payment.paymentDetails.actions.defaultButton") }}
         </sw-button>

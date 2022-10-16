@@ -18,15 +18,11 @@ Component.register("lunar-payment-actions", {
     },
 
     props: {
-        transactionAmount:{
-            type: Number,
-            required: true
-        },
-        lunarTransactionId: {
+        orderId: {
             type: String,
             required: true
         },
-        transactionCurrency: {
+        lunarTransactionId: {
             type: String,
             required: true
         },
@@ -48,17 +44,20 @@ Component.register("lunar-payment-actions", {
         isVoidPossible() {
             return 'authorize' === this.lastTransactionType;
         },
+
+        paymentData() {
+            return {
+                'orderId': this.orderId,
+                'lunarTransactionId': this.lunarTransactionId,
+            };
+        }
     },
 
     methods: {
-        capture() {
+        capturePayment() {
             this.isLoading = true;
 
-            this.LunarPaymentService.capturePayment(
-                this.lunarTransactionId,
-                this.transactionAmount,
-                this.transactionCurrency,
-            )
+            this.LunarPaymentService.capturePayment(this.paymentData)
                 .then(() => {
                     this.createNotificationSuccess({
                         title: this.$tc("lunar-payment.paymentDetails.notifications.captureSuccessTitle"),
@@ -85,14 +84,10 @@ Component.register("lunar-payment-actions", {
                 });
         },
 
-        refund() {
+        refundPayment() {
             this.isLoading = true;
 
-            this.LunarPaymentService.refundPayment(
-                this.lunarTransactionId,
-                this.transactionAmount,
-                this.transactionCurrency,
-            )
+            this.LunarPaymentService.refundPayment(this.paymentData)
                 .then(() => {
                     this.createNotificationSuccess({
                         title: this.$tc("lunar-payment.paymentDetails.notifications.refundSuccessTitle"),
@@ -122,11 +117,7 @@ Component.register("lunar-payment-actions", {
         voidPayment() {
             this.isLoading = true;
 
-            this.LunarPaymentService.voidPayment(
-                this.lunarTransactionId,
-                this.transactionAmount,
-                this.transactionCurrency,
-            )
+            this.LunarPaymentService.voidPayment(this.paymentData)
                 .then(() => {
                     this.createNotificationSuccess({
                         title: this.$tc("lunar-payment.paymentDetails.notifications.voidSuccessTitle"),
@@ -152,7 +143,7 @@ Component.register("lunar-payment-actions", {
                     this.isLoading = false;
                 });
         },
-    
+
         reloadPaymentDetails() {
             this.$emit('reload');
         },

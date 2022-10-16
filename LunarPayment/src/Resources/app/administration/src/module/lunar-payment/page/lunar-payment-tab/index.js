@@ -20,7 +20,7 @@ Component.register('lunar-payment-tab', {
     },
 
     created() {
-        this.createdComponent();
+        this.loadData();
     },
 
     computed: {
@@ -37,10 +37,6 @@ Component.register('lunar-payment-tab', {
     },
 
     methods: {
-        createdComponent() {
-            this.loadData();
-        },
-
         resetDataAttributes() {
             this.lunarTransactions = [];
             this.isLoading = true;
@@ -52,12 +48,12 @@ Component.register('lunar-payment-tab', {
         },
 
         loadData() {
+
             const orderId = this.$route.params.id;
             const criteria = new Criteria();
             criteria.addAssociation('transactions');
 
             this.orderRepository.get(orderId, Context.api, criteria).then((order) => {
-                this.order = order;
 
                 if (!order.transactions) {
                     return;
@@ -69,9 +65,9 @@ Component.register('lunar-payment-tab', {
                             title: this.$tc('lunar-payment.paymentDetails.notifications.genericErrorMessage'),
                             message: this.$tc('lunar-payment.paymentDetails.notifications.orderHaveOtherPayments')
                         });
-                        this.isLoading = false;
-                        return;
                     }
+
+                    this.isLoading = false;
                 });
 
                 this.LunarPaymentService.fetchLunarTransactions(orderId)

@@ -12,7 +12,7 @@ Component.register('lunar-payment-history', {
         return {
             isLoading: false,
             isSuccessful: false,
-            transactionAmount: 0,
+            amountInMinor: 0,
             lunarTransactionId: '',
             transactionCurrency: '',
             lastTransactionType: ''
@@ -24,40 +24,49 @@ Component.register('lunar-payment-history', {
             type: Array,
             required: true
         },
+        orderId: {
+            type: String,
+            required: true
+        },
     },
 
     computed: {
         data() {
-            var self = this;
+            var itself = this;
+
             const data = [];
+            const lunarTransactions = itself.lunarTransactions[0];
 
-            this.lunarTransactions.forEach((lunarTransaction, index) => {
+            if (lunarTransactions) {
 
-                Object.entries(lunarTransaction).forEach(([key, object]) => {
-                    lunarTransaction = object;
+                var index = Object.keys(lunarTransactions).length;
+
+                Object.entries(lunarTransactions).forEach(([key, lunarTransaction]) => {
+
+                    /** Get last transaction id (will be first in the array). */
+                    const lastTransactionId = Object.keys(lunarTransactions)[0];
+
+                    /** Set last transaction details to be available into actions component. */
+                    if (key == lastTransactionId) {
+                        itself.lastTransactionType = lunarTransaction.transactionType;
+                        itself.amountInMinor = lunarTransaction.amountInMinor;
+                        itself.lunarTransactionId = lunarTransaction.transactionId;
+                        itself.transactionCurrency = lunarTransaction.transactionCurrency;
+                    }
+
+                    let createdAt = lunarTransaction.createdAt.split(/[T.]/);
+
+                    data.push({
+                        id: index--,
+                        type: lunarTransaction.transactionType,
+                        transactionId: lunarTransaction.transactionId,
+                        currencyCode: lunarTransaction.transactionCurrency,
+                        orderAmount: lunarTransaction.orderAmount,
+                        transactionAmount: lunarTransaction.transactionAmount,
+                        date: createdAt[0] + ' ' + createdAt[1]
+                    });
                 });
-
-                /** Set last transaction type & amount. */
-                if (index == (self.lunarTransactions.length - 1)) {
-                    self.lastTransactionType = lunarTransaction.transactionType;
-                    self.transactionAmount = lunarTransaction.amountInMinor;
-                    self.lunarTransactionId = lunarTransaction.transactionId;
-                    self.transactionCurrency = lunarTransaction.transactionCurrency;
-                }
-
-                let createdAt = lunarTransaction.createdAt.split(/[T.]/);
-
-                data.push({
-                    id: index + 1,
-                    type: lunarTransaction.transactionType,
-                    transactionId: lunarTransaction.transactionId,
-                    currencyCode: lunarTransaction.transactionCurrency,
-                    orderAmount: lunarTransaction.orderAmount,
-                    transactionAmount: lunarTransaction.transactionAmount,
-                    date: createdAt[0] + ' ' + createdAt[1],
-                    // resource: lunarTransaction
-                });
-            });
+            }
 
             return data;
         },
