@@ -2,6 +2,7 @@
 
 namespace LunarPayment\Controller;
 
+
 use Shopware\Core\Defaults;
 use Shopware\Core\Framework\Context;
 use Symfony\Component\HttpFoundation\Request;
@@ -21,7 +22,6 @@ use LunarPayment\Helpers\PluginHelper;
 use LunarPayment\Helpers\CurrencyHelper;
 use LunarPayment\lib\Exception\ApiException;
 use LunarPayment\Helpers\LogHelper as Logger;
-
 
 /**
  * Responsible for handling order payment transactions
@@ -67,7 +67,7 @@ class OrderTransactionController extends AbstractController
     }
 
     /**
-     * FETCH TRANSACTION
+     * FETCH TRANSACTIONS
      *
      * @Route("/api/_action/lunar_payment/{orderId}/fetch-transactions", name="api.action.lunar_payment.order_id.fetch-transactions", methods={"POST"})
      */
@@ -81,9 +81,9 @@ class OrderTransactionController extends AbstractController
              */
             $criteria = new Criteria();
             $criteria->addFilter(new EqualsFilter('orderId', $orderId));
-            // $criteria->addFilter(new EqualsFilter('transactionType',  OrderHelper::AUTHORIZE_STATUS));
 
             $lunarTransactions = $this->lunarTransactionRepository->search($criteria, $context);
+
         } catch (\Exception $e) {
             $errors[] = $e->getMessage();
         }
@@ -109,125 +109,133 @@ class OrderTransactionController extends AbstractController
     /**
      * CAPTURE
      *
-     * @Route("/api/_action/lunar_payment/{lunarTransactionId}/capture", name="api.action.lunar_payment.lunarTransactionId.capture", methods={"POST"})
+     * @Route("/api/_action/lunar_payment/capture", name="api.action.lunar_payment.capture", methods={"POST"})
      */
     public function capture(Request $request, Context $context): JsonResponse
     {
-        // try {
+        try {
 
-        // } catch (\Exception $e) {
+            $requestContent = json_decode($request->getContent());
+            $params = json_decode(json_encode($requestContent->params), true);
+            $orderId = $params['orderId'];
+            $lunarTransactionId = $params['lunarTransactionId'];
 
-        // }
 
-        $errors = [];
+    // file_put_contents("/app/var/log/zzz.log", ($params), FILE_APPEND);
+            // file_put_contents("/app/var/log/zzz.log", json_encode($params), FILE_APPEND);
 
-        $orderId = $request->orderId;
-        $this->orderHelper->getOrderById($orderId, $context);
+            $order = $this->orderHelper->getOrderById($orderId, $context);
 
-        $transactionId = $request->transactionId;
-        $transaction = $this->orderHelper->getTransactionById($transactionId, $context);
+            $lastTransaction = $order->transactions->last();
 
-        $transactionStateName = $transaction->getStateMachineState()->technicalName;
+            $transactionStateName = $lastTransaction->getStateMachineState()->technicalName;
 
-        /**
-         * Check transaction registered in custom table
-         */
-        $criteria = new Criteria();
-        $orderId = $transaction->getOrder()->getId();
-        $criteria->addFilter(new EqualsFilter('orderId', $orderId));
-        $criteria->addFilter(new EqualsFilter('transactionType',  OrderHelper::AUTHORIZE_STATUS));
+            /**
+             * Get lunar transaction
+             */
+            $criteria = new Criteria();
+            $criteria->addFilter(new EqualsFilter('orderId', $orderId));
+            $criteria->addFilter(new EqualsFilter('transactionType',  OrderHelper::AUTHORIZE_STATUS));
 
-        $lunarTransaction = $this->lunarTransactionRepository->search($criteria, $context)->first();
+            $lunarTransaction = $this->lunarTransactionRepository->search($criteria, $context)->first();
 
-        if (!$lunarTransaction || OrderHelper::TRANSACTION_AUTHORIZED != $transactionStateName) {
-            return new JsonResponse([
-                'status'  => empty($errors),
-                'message' => 'Error',
-                'code'    => 0,
-                'errors'=> ['not_lunar_transaction' => 'Capture failed. Not lunar transaction or payment not authorised.'],
-            ], 400);
+            if (!$lunarTransaction || OrderHelper::TRANSACTION_AUTHORIZED != $transactionStateName) {
+                return new JsonResponse([
+                    'status'  => empty($errors),
+                    'message' => 'Error',
+                    'code'    => 0,
+                    'errors'=> ['not_lunar_transaction' => 'Capture failed. Not lunar transaction or payment not authorised.'],
+                ], 400);
+            }
+
+            /**
+             * Instantiate Api Client
+             * Fetch transaction
+             * Check amount & currency
+             * Proceed with payment capture
+             */
+            $privateApiKey = $this->getApiKey($order);
+            $apiClient = new ApiClient($privateApiKey);
+            $fetchedTransaction = $apiClient->transactions()->fetch($lunarTransactionId);
+
+            if (!$fetchedTransaction) {
+                return new JsonResponse([
+                    'status'  => empty($errors),
+                    'message' => 'Error',
+                    'code'    => 0,
+                    // 'errors'=> ['fetch_transaction_failed' => 'Fetch transaction failed'],
+                    'errors'=> ['Fetch transaction failed'],
+                ], 400);
+            }
+
+            $totalPrice = $lastTransaction->amount->getTotalPrice();
+            $currencyCode = $order->getCurrency()->isoCode;
+            $amountInMinor = (int) CurrencyHelper::getAmountInMinor($currencyCode, $totalPrice);
+
+            if ($fetchedTransaction['amount'] !== $amountInMinor) {
+                // $errors['amount_mismatch'] = 'Fetch transaction failed: amount mismatch';
+                $errors[] = 'Fetch transaction failed: amount mismatch';
+            }
+            if ($fetchedTransaction['currency'] !== $currencyCode) {
+                // $errors['currency_mismatch'] = 'Fetch transaction failed: currency mismatch';
+                $errors[] = 'Fetch transaction failed: currency mismatch';
+            }
+
+            if ($fetchedTransaction['pendingAmount'] !== $amountInMinor) {
+                // $errors['pending_amount_mismatch'] = 'Fetch transaction failed: currency mismatch';
+                $errors[] = 'Fetch transaction failed: currency mismatch';
+            }
+
+            $transactionData = [
+                'amount' => $amountInMinor,
+                'currency' => $currencyCode,
+            ];
+
+            $result['successful'] = false;
+            $result = $apiClient->transactions()->capture($lunarTransactionId, $transactionData);
+
+            $this->logger->writeLog(['CAPTURE request data: ', $transactionData]);
+
+
+            if (true !== $result['successful']) {
+                $this->logger->writeLog(['CAPTURE error (admin): ', $result]);
+                // $errors['capture_failed'] = 'Capture transaction api action failed';
+                $errors[] = 'Capture transaction api action failed';
+            }
+
+
+            $transactionAmount = CurrencyHelper::getAmountInMajor($currencyCode, $result['capturedAmount']);
+
+            $transactionData = [
+                [
+                    'orderId' => $orderId,
+                    'transactionId' => $lunarTransactionId,
+                    'transactionType' => OrderHelper::CAPTURE_STATUS,
+                    'transactionCurrency' => $currencyCode,
+                    'orderAmount' => $totalPrice,
+                    'transactionAmount' => $transactionAmount,
+                    'amountInMinor' => $amountInMinor,
+                    'createdAt' => date(Defaults::STORAGE_DATE_TIME_FORMAT),
+                ],
+            ];
+
+            /** Insert new data to database and log it. */
+            $this->lunarTransactionRepository->create($transactionData, $context);
+
+            $this->logger->writeLog(['Succes: ', $transactionData[0]]);
+
+        } catch (\Exception $e) {
+            // $errors['exception_error'] = 'An exception occured. Please try again. If this persist please contact plugin developer.';
+            $errors[] = 'An exception occured. Please try again. If this persist please contact plugin developer.';
+            $this->logger->writeLog(['EXCEPTION Capture (admin): ', $e->getMessage()]);
         }
-
-        $lunarTransactionId = $lunarTransaction->getTransactionId();
-
-
-        /**
-         * Instantiate Api Client
-         * Fetch transaction
-         * Check amount & currency
-         * Proceed with payment capture
-         */
-        $privateApiKey = $this->getApiKey($transaction);
-        $apiClient = new ApiClient($privateApiKey);
-        $fetchedTransaction = $apiClient->transactions()->fetch($lunarTransactionId);
-
-        if (!$fetchedTransaction) {
-            return new JsonResponse([
-                'status'  => empty($errors),
-                'message' => 'Error',
-                'code'    => 0,
-                'errors'=> ['fetch_transaction_failed' => 'Fetch transaction failed'],
-            ], 400);
-        }
-
-        $totalPrice = $transaction->amount->getTotalPrice();
-        $currencyCode = $transaction->getOrder()->getCurrency()->isoCode;
-        $amountValue = (int) CurrencyHelper::getAmountInMinor($currencyCode, $totalPrice);
-
-        if ($fetchedTransaction['amount'] !== $amountValue) {
-            $errors['amount_mismatch'] = 'Fetch transaction failed: amount mismatch';
-        }
-        if ($fetchedTransaction['currency'] !== $currencyCode) {
-            $errors['currency_mismatch'] = 'Fetch transaction failed: currency mismatch';
-        }
-
-        if ($fetchedTransaction['pendingAmount'] !== $amountValue) {
-
-        }
-
-        $transactionData = [
-            'amount' => $amountValue,
-            'currency' => $currencyCode,
-        ];
-
-        $result['successful'] = false;
-        $result = $apiClient->transactions()->capture($lunarTransactionId, $transactionData);
-
-        $this->logger->writeLog(['CAPTURE request data: ', $transactionData]);
-
-
-        if (true !== $result['successful']) {
-            $this->logger->writeLog(['CAPTURE error (admin): ', $result]);
-            $errors['capture_failed'] = 'Capture transaction api action failed';
-        }
-
-
-        $transactionAmount = CurrencyHelper::getAmountInMajor($currencyCode, $result['capturedAmount']);
-
-        $transactionData = [
-            [
-                'orderId' => $orderId,
-                'transactionId' => $lunarTransactionId,
-                'transactionType' => OrderHelper::CAPTURE_STATUS,
-                'transactionCurrency' => $currencyCode,
-                'orderAmount' => $totalPrice,
-                'transactionAmount' => $transactionAmount,
-                'createdAt' => date(Defaults::STORAGE_DATE_TIME_FORMAT),
-            ],
-        ];
-
-        /** Insert new data to database and log it. */
-        $this->lunarTransactionRepository->create($transactionData, $context);
-
-        $this->logger->writeLog(['Succes: ', $transactionData[0]]);
-
 
         if (!empty($errors)) {
             return new JsonResponse([
                 'status'  => empty($errors),
                 'message' => 'Error',
                 'code'    => 0,
-                'errors'=> $errors,
+                'errors'=> $errors ?? [],
             ], 400);
         }
 
@@ -235,16 +243,16 @@ class OrderTransactionController extends AbstractController
             'status'  =>  empty($errors),
             'message' => 'Success',
             'code'    => 0,
-            'errors'  => $errors,
+            'errors'  => $errors ?? [],
         ], 200);
     }
 
     /**
      *
      */
-    private function getApiKey($transaction)
+    private function getApiKey($order)
     {
-        $salesChannelId = $transaction->getOrder()->getSalesChannelId();
+        $salesChannelId = $order->getSalesChannelId();
 
         $transactionMode = $this->systemConfigService->get(self::CONFIG_PATH . 'transactionMode', $salesChannelId);
 
